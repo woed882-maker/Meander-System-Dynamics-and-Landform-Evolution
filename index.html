@@ -1,0 +1,3070 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIE A-Level 9696: Meander & Fluvial Geomorphology Simulator</title>
+  <meta name="description" content="Interactive CIE A-Level Geography 9696 educational simulator for meanders, river cliffs, point bars, helicoidal flow, and oxbow lakes.">
+  
+  <!-- CDN Dependencies -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            river: {
+              50: '#f0f9ff',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              800: '#075985',
+              900: '#0c4a6e',
+              deep: '#032541',
+            },
+            cliff: {
+              400: '#f87171',
+              600: '#dc2626',
+              700: '#b91c1c',
+              earth: '#854d0e',
+            },
+            sediment: {
+              300: '#fde047',
+              400: '#facc15',
+              500: '#eab308',
+              600: '#ca8a04',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-sky-500/20 text-white font-bold">
+          <i data-lucide="waves" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              曲流系统动力学与地貌演变
+            </h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-sky-950 text-sky-300 border border-sky-800/80">
+              Meander Dynamics
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">剑桥 CIE A-Level 地理 · Syllabus 9696 Fluvial Geomorphology</p>
+        </div>
+      </div>
+
+      <!-- Action buttons & badges -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <span class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          CIE 9696 考纲核心课件
+        </span>
+        <button id="btn-export-html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 transition shadow-sm active:scale-95" title="下载完全离线可运行的单文件 HTML">
+          <i data-lucide="download" class="w-3.5 h-3.5 text-sky-400"></i>
+          <span class="hidden md:inline">导出单文件</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60 flex space-x-1 sm:space-x-2 overflow-x-auto py-1">
+      <button class="tab-btn px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap bg-sky-500/10 text-sky-400 border border-sky-500/30" data-tab="tab-topdown">
+        <i data-lucide="compass" class="w-4 h-4"></i>
+        <span>1. 俯视水力动态模拟</span>
+      </button>
+      <button class="tab-btn px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent" data-tab="tab-crosssection">
+        <i data-lucide="git-commit" class="w-4 h-4"></i>
+        <span>2. 非对称横截面与螺旋流</span>
+      </button>
+      <button class="tab-btn px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent" data-tab="tab-timeline">
+        <i data-lucide="history" class="w-4 h-4"></i>
+        <span>3. 曲流至牛轭湖时间轴演变</span>
+      </button>
+      <button class="tab-btn px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent" data-tab="tab-revision">
+        <i data-lucide="award" class="w-4 h-4"></i>
+        <span>4. CIE 9696 考前冲刺小工具</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: 俯视水力动态模拟器 (Top-Down Meander Simulator) -->
+    <!-- ========================================================================= -->
+    <section id="tab-topdown" class="tab-panel space-y-6">
+      <!-- Info Header Card -->
+      <div class="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 backdrop-blur shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 text-xs font-semibold">Module 1</span>
+              <h2 class="text-lg sm:text-xl font-bold text-white">俯视水力动态模拟器 (Top-Down Meander Simulator)</h2>
+            </div>
+            <p class="text-sm text-slate-400 mt-1 max-w-3xl">
+              展示自然蜿蜒河流（S-Bend）中由于离心力与流道阻力导致的不对称速度场。鼠标悬停在河道任意处即可探测实时水深、估测流速及主导地貌作用（侵蚀 / 沉积 / 搬运）。
+            </p>
+          </div>
+          <!-- Quick Legend -->
+          <div class="flex flex-wrap items-center gap-3 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+              <span class="text-slate-300">凹岸侵蚀 (Concave Bank)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+              <span class="text-slate-300">凸岸沉积 (Convex Bank)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-0.5 bg-sky-400 border-b border-dashed border-sky-300"></span>
+              <span class="text-slate-300">深泓线 (Thalweg)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulator Layout: Canvas + Control Bar -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Canvas Viewport (3 Cols on Desktop) -->
+        <div class="lg:col-span-3 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg flex flex-col">
+          <!-- Canvas Toolbar Overlay -->
+          <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 z-10">
+            <div class="flex items-center gap-2">
+              <button id="btn-toggle-play-particles" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white transition">
+                <i data-lucide="pause" class="w-3.5 h-3.5" id="icon-play-state"></i>
+                <span id="text-play-state">暂停流动</span>
+              </button>
+              <button id="btn-reset-particles" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                重置粒子
+              </button>
+            </div>
+
+            <!-- Flow Discharge presets -->
+            <div class="flex items-center gap-1.5 text-xs">
+              <span class="text-slate-400">流量 (Discharge):</span>
+              <button class="discharge-btn px-2 py-0.5 rounded text-xs transition bg-slate-800 text-slate-300 hover:bg-slate-700" data-val="0.6">低枯水</button>
+              <button class="discharge-btn px-2 py-0.5 rounded text-xs transition bg-sky-500/20 text-sky-400 border border-sky-500/40 font-semibold" data-val="1.0">平水常态</button>
+              <button class="discharge-btn px-2 py-0.5 rounded text-xs transition bg-slate-800 text-slate-300 hover:bg-slate-700" data-val="1.6">洪水峰期</button>
+            </div>
+          </div>
+
+          <!-- Canvas Container -->
+          <div class="relative w-full aspect-[16/9] min-h-[380px] bg-slate-950 flex items-center justify-center overflow-hidden cursor-crosshair" id="meander-canvas-wrap">
+            <canvas id="meander-topdown-canvas" class="w-full h-full block"></canvas>
+            
+            <!-- Real-time Hydraulic Inspection Tooltip -->
+            <div id="canvas-inspect-tooltip" class="absolute pointer-events-none hidden bg-slate-900/95 border border-sky-500/40 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs z-20 w-64 space-y-1.5 transition-opacity duration-150">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <span class="font-bold text-sky-400 flex items-center gap-1">
+                  <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                  测点水力参数
+                </span>
+                <span id="tooltip-zone-badge" class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-950 text-red-400 border border-red-800">
+                  凹岸 (Outer Bank)
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-slate-300 text-[11px]">
+                <div>估测流速 (v): <span id="tooltip-velocity" class="font-mono font-semibold text-white">1.35 m/s</span></div>
+                <div>估测水深 (d): <span id="tooltip-depth" class="font-mono font-semibold text-white">3.4 m</span></div>
+                <div>床底阻力: <span id="tooltip-friction" class="font-semibold text-slate-300">低 (深水微阻)</span></div>
+                <div>水力半径 (R): <span id="tooltip-hydraulic" class="font-mono font-semibold text-slate-300">高 (有效输运)</span></div>
+              </div>
+              <div class="border-t border-slate-800 pt-1.5 text-[11px]">
+                <span class="text-slate-400">主导地貌过程:</span>
+                <div id="tooltip-process" class="font-semibold text-red-400 mt-0.5 flex items-center gap-1">
+                  <i data-lucide="flame" class="w-3 h-3"></i>
+                  强烈侧向侵蚀 (Lateral Erosion: Hydraulic Action)
+                </div>
+              </div>
+            </div>
+
+            <!-- Hint on overlay -->
+            <div class="absolute bottom-2 left-3 pointer-events-none bg-slate-900/70 backdrop-blur px-2.5 py-1 rounded text-[11px] text-slate-400 border border-slate-800">
+              💡 移动鼠标到河道上查看水动力学参数；深泓线偏向两处凹岸外侧
+            </div>
+          </div>
+        </div>
+
+        <!-- Layer Controls & Fluvial Principles Panel (1 Col) -->
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between space-y-4 shadow-sm">
+          <div class="space-y-4">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <i data-lucide="layers" class="w-4 h-4 text-sky-400"></i>
+              图层控制开关 (Layer Toggles)
+            </h3>
+            
+            <div class="space-y-2.5">
+              <!-- Toggle Thalweg -->
+              <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+                <span class="text-xs font-medium text-slate-200 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                  深泓线 (Thalweg)
+                </span>
+                <input type="checkbox" id="layer-thalweg" checked class="w-4 h-4 rounded text-sky-500 bg-slate-900 border-slate-600 focus:ring-0">
+              </label>
+
+              <!-- Toggle Erosion & Deposition Heatmaps -->
+              <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+                <span class="text-xs font-medium text-slate-200 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                  侵蚀区 / 沉积区高亮
+                </span>
+                <input type="checkbox" id="layer-zones" checked class="w-4 h-4 rounded text-sky-500 bg-slate-900 border-slate-600 focus:ring-0">
+              </label>
+
+              <!-- Toggle Pools and Riffles -->
+              <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+                <span class="text-xs font-medium text-slate-200 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                  深潭 / 浅滩标注 (Pools & Riffles)
+                </span>
+                <input type="checkbox" id="layer-pools" checked class="w-4 h-4 rounded text-sky-500 bg-slate-900 border-slate-600 focus:ring-0">
+              </label>
+
+              <!-- Particle density/speed slider -->
+              <div class="pt-2 space-y-1.5 border-t border-slate-800">
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span>粒子流速度倍率</span>
+                  <span id="label-speed-mult" class="font-mono text-sky-400">1.0x</span>
+                </div>
+                <input type="range" id="slider-particle-speed" min="0.4" max="2.2" step="0.1" value="1.0" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- CIE 9696 Core Rule summary card -->
+          <div class="bg-slate-950/80 rounded-xl p-3.5 border border-slate-800 text-xs space-y-2">
+            <div class="font-bold text-sky-300 flex items-center gap-1.5">
+              <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+              CIE 9696 考纲水力规律
+            </div>
+            <ul class="text-slate-300 space-y-1.5 text-[11px] leading-relaxed">
+              <li class="flex items-start gap-1.5">
+                <span class="text-red-400 font-bold">•</span>
+                <span><strong>凹岸（Outer Bank）</strong>：离心力驱使水流堆积，深泓线紧贴，水深大、湿周阻力相对小，形成<strong>最大流速区</strong>，主导侧向侵蚀。</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-amber-400 font-bold">•</span>
+                <span><strong>凸岸（Inner Bank）</strong>：水深极浅，床底摩擦大，水流减速，能量骤降致使推移质沉积形成<strong>点坝（Point Bar）</strong>。</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-emerald-400 font-bold">•</span>
+                <span><strong>Pool-Riffle 间距</strong>：深潭位于弯道处，浅滩位于两弯之间的过渡段，间距约为河道宽度的 <strong>5–7 倍</strong>。</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: 河道不对称横截面与螺旋流 (Asymmetric Cross-Section Explorer) -->
+    <!-- ========================================================================= -->
+    <section id="tab-crosssection" class="tab-panel hidden space-y-6">
+      <!-- Section Intro Card -->
+      <div class="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 backdrop-blur shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs font-semibold">Module 2</span>
+              <h2 class="text-lg sm:text-xl font-bold text-white">河道非对称横截面与三维螺旋流剖析 (Asymmetric Cross-Section & Helicoidal Flow)</h2>
+            </div>
+            <p class="text-sm text-slate-400 mt-1 max-w-3xl">
+              展示曲流弯道顶端处典型的非对称截面（Asymmetric Channel Profile）。外侧凹岸发育直立陡峭的<strong>河崖（River Cliff）</strong>与掏空槽；内侧凸岸发育平缓的<strong>点坝（Point Bar / Slip-off slope）</strong>。核心动力学机制为<strong>三维螺旋流（Helicoidal Flow / Corkscrew Motion）</strong>。
+            </p>
+          </div>
+          <!-- Helicoidal mode switch -->
+          <div class="flex items-center gap-2">
+            <button id="btn-toggle-helicoidal" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin"></i>
+              <span>螺旋环流动画: 运行中</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Cross-Section Display Area -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Cross-Section Canvas/SVG (2 cols) -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg flex flex-col">
+          <!-- Canvas Top Bar -->
+          <div class="px-4 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-200">横截面剖面观察点：曲流最大弯曲处 (Meander Apex)</span>
+              <span class="text-slate-500">|</span>
+              <span class="text-slate-400">点击图上闪烁热点查看 CIE 9696 考点解析</span>
+            </div>
+            <span class="text-xs text-sky-400 font-mono">Water Surface Elevation: 100%</span>
+          </div>
+
+          <!-- Cross-Section Canvas -->
+          <div class="relative w-full aspect-[16/10] min-h-[380px] bg-slate-950 flex items-center justify-center overflow-hidden" id="crosssection-canvas-wrap">
+            <canvas id="crosssection-canvas" class="w-full h-full block cursor-pointer"></canvas>
+            
+            <!-- Floating Quick Guide on Canvas -->
+            <div class="absolute top-3 left-4 bg-slate-900/80 backdrop-blur border border-red-900/50 px-3 py-1.5 rounded-lg text-[11px] text-red-300">
+              ⬅ <strong>外岸/凹岸 (Concave/Outer Bank)</strong>: 陡峭河崖、下部掏空、深泓线
+            </div>
+            <div class="absolute top-3 right-4 bg-slate-900/80 backdrop-blur border border-amber-900/50 px-3 py-1.5 rounded-lg text-[11px] text-amber-300 text-right">
+              <strong>内岸/凸岸 (Convex/Inner Bank)</strong>: 平缓点坝、沉积递变 ➡
+            </div>
+          </div>
+
+          <!-- Bottom Legend for Cross-Section -->
+          <div class="p-3 bg-slate-950 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-red-600"></span>
+              <span class="text-slate-300">河崖与崩塌 (Cliff & Slump)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-amber-500"></span>
+              <span class="text-slate-300">点坝沉积 (Point Bar)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-sky-400"></span>
+              <span class="text-slate-300">深泓线核心 (Thalweg)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-indigo-400"></span>
+              <span class="text-slate-300">螺旋次级环流 (Helicoidal)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hotspot Detail & Mark Scheme Breakdown Panel (1 col) -->
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between shadow-sm" id="hotspot-detail-container">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-2">
+                <span id="hotspot-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-sky-500/20 text-sky-400 border border-sky-500/40">
+                  Interactive Hotspot
+                </span>
+                <h3 id="hotspot-title" class="text-base font-bold text-white">点击剖面热点探索</h3>
+              </div>
+            </div>
+
+            <!-- Content dynamic area -->
+            <div id="hotspot-body" class="space-y-3 text-xs text-slate-300 leading-relaxed">
+              <p class="text-slate-400">
+                请在左侧横截面示意图上点击标有 <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white font-bold text-[10px]">1</span> 到 <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white font-bold text-[10px]">5</span> 的闪烁交互热点，以调阅剑桥 CIE A-Level 评分标准认可的专业术语与机制剖析。
+              </p>
+
+              <!-- Quick List of 5 hotspots -->
+              <div class="space-y-1.5 pt-2">
+                <button class="w-full text-left p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition flex items-center justify-between select-hotspot-btn" data-hotspot="1">
+                  <span class="font-medium text-slate-200">① 凹岸侵蚀崖与下部掏空 (River Cliff & Notch)</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+                <button class="w-full text-left p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition flex items-center justify-between select-hotspot-btn" data-hotspot="2">
+                  <span class="font-medium text-slate-200">② 崩塌物堆叠 (Mass Movement & Slumping)</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+                <button class="w-full text-left p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition flex items-center justify-between select-hotspot-btn" data-hotspot="3">
+                  <span class="font-medium text-slate-200">③ 深泓线位置 (Thalweg & Max Velocity)</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+                <button class="w-full text-left p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition flex items-center justify-between select-hotspot-btn" data-hotspot="4">
+                  <span class="font-medium text-slate-200">④ 三维螺旋流回流 (Helicoidal Secondary Cell)</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+                <button class="w-full text-left p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition flex items-center justify-between select-hotspot-btn" data-hotspot="5">
+                  <span class="font-medium text-slate-200">⑤ 凸岸点坝与分选沉积 (Point Bar / Sorting)</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam Mark Scheme Hint -->
+          <div class="mt-4 p-3 bg-indigo-950/50 rounded-xl border border-indigo-800/60 text-indigo-200 text-[11px] space-y-1">
+            <div class="font-bold flex items-center gap-1 text-indigo-300">
+              <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+              Examiner Report 常见误区
+            </div>
+            <p>
+              许多考生误以为螺旋流在表层向凸岸流动。正确机制是：<strong>表层水流向凹岸堆高</strong>，由于重力与压力梯度，<strong>底层水流贴着河床回旋向凸岸</strong>，并将底部侵蚀产物输送至凸岸形成点坝！
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: 曲流三维地质演变与牛轭湖形成 (3D Geological Block Model of Oxbow Lake) -->
+    <!-- ========================================================================= -->
+    <section id="tab-timeline" class="tab-panel hidden space-y-6">
+      <!-- Section Intro Card -->
+      <div class="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 backdrop-blur shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-semibold">Module 3</span>
+              <h2 class="text-lg sm:text-xl font-bold text-white">曲流三维地质演变与牛轭湖形成全模型 (3D Block Model of Oxbow Lake Formation)</h2>
+            </div>
+            <p class="text-sm text-slate-400 mt-1 max-w-3xl">
+              严格遵循经典地理学教科书与剑桥 CIE 9696 考纲标准：三维地质块体切片（Geological Block Diagrams）、泛滥平原与土壤剖面、凹岸侵蚀崖（Cutbank）、凸岸点坝（Point Bar）、曲流颈极度变窄（Narrow Neck）、特大洪水裁弯取直（Chute Cut-Off）及泥沙与粘土淤塞封堵（Plugs with Silt & Clay）。
+            </p>
+          </div>
+
+          <!-- View Mode & Language Controls -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Mode switch buttons -->
+            <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
+              <button id="btn-mode-4blocks" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                <span>四阶段三维全景图谱</span>
+              </button>
+              <button id="btn-mode-interactive" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>3D 动态平滑演变</span>
+              </button>
+            </div>
+
+            <!-- Language toggle -->
+            <button id="btn-toggle-timeline-lang" class="px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold bg-slate-900 text-slate-300 hover:text-white transition flex items-center gap-1.5">
+              <i data-lucide="languages" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span id="label-timeline-lang">中英双语标签</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 1: FOUR-STAGE 3D GEOLOGICAL BLOCK DIAGRAM VIEW (Replicating Textbook Illustration) -->
+      <div id="view-timeline-4blocks" class="space-y-6">
+        <!-- Sub-header bar with layout switcher -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 text-xs">
+          <div class="flex items-center gap-2 text-slate-300">
+            <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
+            <span class="font-bold">经典地理教科书四阶段演变序列图解 (Sequential 3D Crust Block Series)</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-400">
+            <span>显示排布:</span>
+            <button id="btn-layout-vertical" class="px-2.5 py-1 rounded bg-slate-800 text-emerald-400 border border-emerald-500/40 font-medium transition">纵向连贯排布</button>
+            <button id="btn-layout-grid" class="px-2.5 py-1 rounded bg-slate-900 text-slate-400 hover:text-white border border-slate-800 font-medium transition">2×2 网格对比</button>
+          </div>
+        </div>
+
+        <!-- 4 Blocks Grid / Stack Container -->
+        <div id="blocks-container" class="flex flex-col gap-6">
+          
+          <!-- Block 1 Card -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-sm hover:border-slate-700 transition">
+            <div class="p-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30">1</span>
+                <h3 class="text-sm font-bold text-white">阶段 1: 初始曲流与深泓线横向偏转 (Initial Meander & Sinuosity)</h3>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono">Stage 1 of 4</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+              <!-- Canvas Block (8 cols) -->
+              <div class="lg:col-span-8 p-3 bg-slate-950 flex items-center justify-center relative min-h-[300px] border-b lg:border-b-0 lg:border-r border-slate-800/80">
+                <canvas id="block-canvas-1" class="w-full max-w-[700px] aspect-[16/9] block rounded-lg"></canvas>
+              </div>
+              <!-- Text Explanation (4 cols) -->
+              <div class="lg:col-span-4 p-5 flex flex-col justify-between space-y-4 bg-slate-900/50">
+                <div class="space-y-3">
+                  <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">地貌演变与水动力成因</div>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    在原本平缓的冲积平原上，即使是笔直河道也会自发形成<strong>深潭-浅滩序列 (Pool-Riffle sequence)</strong>。深潭区水深流急，深泓线（Thalweg）因离心力横向摆动，在凹岸产生初始侧向掏蚀，凸岸水流减速并初次堆积砂砾点坝。
+                  </p>
+                  <div class="space-y-1.5 pt-1 text-xs">
+                    <div class="flex items-start gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0"></span>
+                      <span class="text-slate-300"><strong class="text-red-400">红色标注 (Cutbank)</strong>: 凹岸初始侵蚀区，水力作用与磨蚀活跃</span>
+                    </div>
+                    <div class="flex items-start gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0"></span>
+                      <span class="text-slate-300"><strong class="text-amber-300">浅褐砂色 (Point Bar)</strong>: 凸岸低能量浅流区，砂砾沉积物初显</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
+                  <span class="text-sky-400 font-bold">CIE 考纲考点:</span> 曲度指数 Sinuosity &gt; 1.5 即被定义为曲流（Meander）。初始扰动由河床水下微地形阻力诱发。
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Block 2 Card -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-sm hover:border-slate-700 transition">
+            <div class="p-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">2</span>
+                <h3 class="text-sm font-bold text-white">阶段 2: 侧向侵蚀加剧与曲流颈极度变窄 (Meander Expansion & Narrow Neck)</h3>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono">Stage 2 of 4</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+              <!-- Canvas Block (8 cols) -->
+              <div class="lg:col-span-8 p-3 bg-slate-950 flex items-center justify-center relative min-h-[300px] border-b lg:border-b-0 lg:border-r border-slate-800/80">
+                <canvas id="block-canvas-2" class="w-full max-w-[700px] aspect-[16/9] block rounded-lg"></canvas>
+              </div>
+              <!-- Text Explanation (4 cols) -->
+              <div class="lg:col-span-4 p-5 flex flex-col justify-between space-y-4 bg-slate-900/50">
+                <div class="space-y-3">
+                  <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">教科书核心图注要素</div>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    三维螺旋流（Helicoidal flow）完全发育并形成正反馈循环。弯道向外急剧扩展，相邻弯道的凹岸反向剧烈侧蚀，两段河槽间陆地被压缩成极狭窄的<strong>曲流颈（Neck）</strong>。
+                  </p>
+                  <div class="space-y-2 pt-1 text-xs">
+                    <div class="p-2 rounded-lg bg-red-950/30 border border-red-900/50">
+                      <span class="font-bold text-red-400">cutbank (凹岸侵蚀崖)</span>
+                      <p class="text-[11px] text-slate-300 mt-0.5">水流离心力最强处，水力作用掏空坡脚致岸坡坍塌。</p>
+                    </div>
+                    <div class="p-2 rounded-lg bg-amber-950/30 border border-amber-900/50">
+                      <span class="font-bold text-amber-300">point bar (凸岸点坝)</span>
+                      <p class="text-[11px] text-slate-300 mt-0.5">低速减阻区，螺旋流底层水流自凹岸搬运沉积物向内堆积。</p>
+                    </div>
+                    <div class="p-2 rounded-lg bg-purple-950/30 border border-purple-900/50">
+                      <span class="font-bold text-purple-300">neck (曲流颈)</span>
+                      <p class="text-[11px] text-slate-300 mt-0.5">两反向凹岸互相靠近形成的细狭陆桥，处于裁弯突破临界态。</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
+                  <span class="text-amber-400 font-bold">CIE 考纲考点:</span> 必须说明曲流颈变窄是<strong>两侧凹岸反向侵蚀（Opposing erosion）</strong>的结果。
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Block 3 Card -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-sm hover:border-slate-700 transition">
+            <div class="p-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">3</span>
+                <h3 class="text-sm font-bold text-white">阶段 3: 特大洪水期冲开曲流颈裁弯取直 (Chute Cut-Off During Flood)</h3>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono">Stage 3 of 4</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+              <!-- Canvas Block (8 cols) -->
+              <div class="lg:col-span-8 p-3 bg-slate-950 flex items-center justify-center relative min-h-[300px] border-b lg:border-b-0 lg:border-r border-slate-800/80">
+                <canvas id="block-canvas-3" class="w-full max-w-[700px] aspect-[16/9] block rounded-lg"></canvas>
+              </div>
+              <!-- Text Explanation (4 cols) -->
+              <div class="lg:col-span-4 p-5 flex flex-col justify-between space-y-4 bg-slate-900/50">
+                <div class="space-y-3">
+                  <div class="text-xs font-bold text-orange-400 uppercase tracking-wider">裁弯动力学机制</div>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    在<strong>特大洪水（Flood / High discharge stage）</strong>期间，暴涨河水漫溢河滩。由于旧曲流迂回路线阻力极大，洪水选择沿曲流颈这一最短直线路径直接冲刷贯通，形成陡坡降的<strong>全新直水道（Chute cut-off）</strong>。
+                  </p>
+                  <div class="space-y-1.5 pt-1 text-xs">
+                    <div class="flex items-start gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 shrink-0"></span>
+                      <span class="text-slate-300"><strong class="text-sky-300">新切主槽 (Cut-Off Chute)</strong>: 直冲入新河槽，水力坡降大，承担绝大部分干流水量</span>
+                    </div>
+                    <div class="flex items-start gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0"></span>
+                      <span class="text-slate-300"><strong class="text-slate-300">废弃弯道 (Bypassed Loop)</strong>: 原有回形弯道失去主流动能，水流近乎停滞</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
+                  <span class="text-orange-400 font-bold">CIE 考纲考点:</span> 区分 Neck cut-off（狭颈冲切）与 Chute cut-off（河滩漫水槽冲切）。洪水期高动能是关键诱因。
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Block 4 Card -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-sm hover:border-slate-700 transition">
+            <div class="p-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">4</span>
+                <h3 class="text-sm font-bold text-white">阶段 4: 泥沙淤塞封堵与独立牛轭湖形成 (Oxbow Lake & Alluvial Plugs)</h3>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono">Stage 4 of 4</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+              <!-- Canvas Block (8 cols) -->
+              <div class="lg:col-span-8 p-3 bg-slate-950 flex items-center justify-center relative min-h-[300px] border-b lg:border-b-0 lg:border-r border-slate-800/80">
+                <canvas id="block-canvas-4" class="w-full max-w-[700px] aspect-[16/9] block rounded-lg"></canvas>
+              </div>
+              <!-- Text Explanation (4 cols) -->
+              <div class="lg:col-span-4 p-5 flex flex-col justify-between space-y-4 bg-slate-900/50">
+                <div class="space-y-3">
+                  <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">教科书核心图注要素</div>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    废弃弯道两端因流速骤降，主河道携带的大量悬移质与推移质（细砂、粉砂与粘土）在进出口大量沉淀，形成<strong>冲积塞（Alluvial Plugs with silt and clay）</strong>。原弯道与干流彻底脱离，成为死水<strong>牛轭湖（Oxbow lake）</strong>。
+                  </p>
+                  <div class="space-y-2 pt-1 text-xs">
+                    <div class="p-2 rounded-lg bg-amber-950/30 border border-amber-900/50">
+                      <span class="font-bold text-amber-300">Plugs with silt and clay (泥沙与粘土淤塞)</span>
+                      <p class="text-[11px] text-slate-300 mt-0.5">低速静水使细粒物质快速沉淀，牢固封闭旧河道两端。</p>
+                    </div>
+                    <div class="p-2 rounded-lg bg-emerald-950/30 border border-emerald-900/50">
+                      <span class="font-bold text-emerald-300">oxbow lake (牛轭湖)</span>
+                      <p class="text-[11px] text-slate-300 mt-0.5">弓形独立静止水体，边缘出现黑色淤泥沼泽退化线，最终演化为湿地沼泽（Marsh）。</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
+                  <span class="text-emerald-400 font-bold">CIE 考纲考点:</span> 必须指出牛轭湖演变的终点：随水分蒸发与水生植物残体淤积，最终退化为弯曲沼泽槽（Meander scar / Swamp）。
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VIEW 2: INTERACTIVE 3D STAGE MORPHING EXPLORER (Smooth Animation & Scrubbing) -->
+      <div id="view-timeline-interactive" class="hidden space-y-6">
+        <!-- Stage Stepper & Controller Bar -->
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 text-emerald-400"></i>
+              3D 地质块体连续平滑演化控制器 (Dynamic 3D Block Controller)
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-mono text-emerald-400 font-semibold" id="label-stage-indicator">Stage 1 of 4</span>
+              <button id="btn-timeline-play" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-sm active:scale-95">
+                <i data-lucide="play" class="w-3.5 h-3.5" id="icon-timeline-play"></i>
+                <span id="text-timeline-play">自动连续播放</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Steps Buttons Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <button class="stage-step-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 bg-emerald-950/40 border-emerald-500 text-white" data-stage="1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-emerald-400">阶段 1 (Stage 1)</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              </div>
+              <span class="text-sm font-semibold">初始微弯与深潭浅滩</span>
+              <span class="text-[11px] text-slate-400">深泓线失稳横向摆动</span>
+            </button>
+
+            <button class="stage-step-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800" data-stage="2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400">阶段 2 (Stage 2)</span>
+                <span class="w-2 h-2 rounded-full bg-transparent"></span>
+              </div>
+              <span class="text-sm font-semibold">曲流颈狭窄 (Narrow Neck)</span>
+              <span class="text-[11px] text-slate-400">两凹岸反向侵蚀逼近</span>
+            </button>
+
+            <button class="stage-step-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800" data-stage="3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400">阶段 3 (Stage 3)</span>
+                <span class="w-2 h-2 rounded-full bg-transparent"></span>
+              </div>
+              <span class="text-sm font-semibold">洪水裁弯 (Chute Cut-off)</span>
+              <span class="text-[11px] text-slate-400">冲开狭颈形成全新直槽</span>
+            </button>
+
+            <button class="stage-step-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800" data-stage="4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400">阶段 4 (Stage 4)</span>
+                <span class="w-2 h-2 rounded-full bg-transparent"></span>
+              </div>
+              <span class="text-sm font-semibold">泥沙淤塞与牛轭湖独立</span>
+              <span class="text-[11px] text-slate-400">Alluvial plugs 封堵成湖</span>
+            </button>
+          </div>
+
+          <!-- Smooth Progress Slider -->
+          <div class="space-y-1 pt-1">
+            <div class="flex justify-between text-[11px] text-slate-400">
+              <span>连续时间平滑插值 (Timeline Scrubbing)</span>
+              <span id="label-slider-percent" class="font-mono text-emerald-400 font-semibold">0% (Stage 1.0)</span>
+            </div>
+            <input type="range" id="slider-timeline" min="1" max="4" step="0.01" value="1" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+          </div>
+        </div>
+
+        <!-- Canvas Viewport + Geological Explanation -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- 3D Canvas Viewport (2 cols) -->
+          <div class="lg:col-span-2 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg flex flex-col">
+            <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-200 flex items-center gap-1.5">
+                <i data-lucide="eye" class="w-3.5 h-3.5 text-emerald-400"></i>
+                三维地质块体动态蜕变 (Interactive 3D Isometric Viewport)
+              </span>
+              <span class="text-slate-400 text-[11px]">观察三维土层截面、水流方向与泥沙封堵</span>
+            </div>
+
+            <div class="relative w-full aspect-[16/10] min-h-[380px] bg-slate-950 flex items-center justify-center overflow-hidden" id="timeline-canvas-wrap">
+              <canvas id="timeline-canvas" class="w-full h-full block"></canvas>
+              
+              <!-- Dynamic State Badge Overlay -->
+              <div id="timeline-state-overlay" class="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur border border-slate-800 p-2.5 rounded-xl text-xs space-y-1">
+                <div class="font-bold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span id="overlay-stage-title">阶段 1: 初始微弯直道</span>
+                </div>
+                <div class="text-slate-400 text-[11px]" id="overlay-stage-desc">
+                  由于河床深潭-浅滩序列的水动力扰动，流速线（Thalweg）产生横向摆动。
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage Detailed CIE Theory Panel (1 col) -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between shadow-sm space-y-4">
+            <div class="space-y-3">
+              <div class="border-b border-slate-800 pb-2">
+                <span class="text-[11px] font-bold text-emerald-400 tracking-wider uppercase">CIE Syllabus 9696 成因剖析</span>
+                <h3 id="panel-stage-name" class="text-base font-bold text-white mt-0.5">Stage 1: Pool-Riffle 形成与初始水流偏转</h3>
+              </div>
+
+              <!-- Key points checklist -->
+              <div id="panel-stage-details" class="space-y-2.5 text-xs text-slate-300 leading-relaxed">
+                <!-- Inserted dynamically via JS -->
+              </div>
+            </div>
+
+            <!-- Mark scheme keyword tags for current stage -->
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">本阶段核心高频采分词:</div>
+              <div id="panel-stage-keywords" class="flex flex-wrap gap-1.5">
+                <!-- dynamic badges -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: A-Level 9696 考前冲刺小工具 (Revision Tool & Self-Assessment) -->
+    <!-- ========================================================================= -->
+    <section id="tab-revision" class="tab-panel hidden space-y-6">
+      <!-- Intro Card -->
+      <div class="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 backdrop-blur shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs font-semibold">Module 4</span>
+              <h2 class="text-lg sm:text-xl font-bold text-white">CIE A-Level 9696 考前冲刺与真题自测 (Exam Revision & Quiz)</h2>
+            </div>
+            <p class="text-sm text-slate-400 mt-1 max-w-3xl">
+              结合剑桥考试局评分标准（Mark Scheme）精炼的高频核心词清单与 5 道精选测试题。即时检测对河流侵蚀机制、三维螺旋流与牛轭湖形成过程的掌握程度。
+            </p>
+          </div>
+          <!-- Overall score badge -->
+          <div class="flex items-center gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+            <span class="text-slate-400">自测得分:</span>
+            <span id="quiz-total-score" class="font-mono text-base font-bold text-purple-400">0 / 5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Part A: Mark Scheme Keywords Checklist (1 Col) -->
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 flex flex-col space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="check-square" class="w-4 h-4 text-purple-400"></i>
+              <h3 class="text-sm font-bold text-white">考纲踩分词清单 (Keywords)</h3>
+            </div>
+            <span class="text-[11px] text-slate-400">共 8 个关键术语</span>
+          </div>
+
+          <!-- Keywords List -->
+          <div class="space-y-2.5 overflow-y-auto max-h-[640px] pr-1" id="keywords-list-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Part B: 5 Exam Questions Self-Assessment (2 Cols) -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-2xl border border-slate-800 p-5 flex flex-col space-y-5 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="help-circle" class="w-4 h-4 text-sky-400"></i>
+              <h3 class="text-sm font-bold text-white">CIE 9696 精选自测试题 (5道题)</h3>
+            </div>
+            <button id="btn-reset-quiz" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+              重新自测
+            </button>
+          </div>
+
+          <!-- Question Cards Container -->
+          <div class="space-y-4" id="quiz-cards-container">
+            <!-- 5 Questions rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 border-t border-slate-800 py-4 mt-auto text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span>Designed for CIE A-Level Geography (Syllabus 9696)</span>
+        <span>•</span>
+        <span>Hydrology and Fluvial Geomorphology</span>
+      </div>
+      <div>完全独立的单文件 HTML 架构 · 支持所有现代浏览器离线运行</div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT: Complete Native Interactive Implementation (Zero Stubs) -->
+  <!-- ========================================================================= -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Lucide Icons
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+
+      // =======================================================================
+      // Core Canvas Elements & Wrappers (Initialized up-front to prevent TDZ errors)
+      // =======================================================================
+      const topCanvas = document.getElementById('meander-topdown-canvas');
+      const topCtx = topCanvas ? topCanvas.getContext('2d') : null;
+      const canvasWrap = document.getElementById('meander-canvas-wrap');
+      const tooltip = document.getElementById('canvas-inspect-tooltip');
+
+      const crossCanvas = document.getElementById('crosssection-canvas');
+      const crossCtx = crossCanvas ? crossCanvas.getContext('2d') : null;
+      const crossWrap = document.getElementById('crosssection-canvas-wrap');
+
+      const timeCanvas = document.getElementById('timeline-canvas');
+      const timeCtx = timeCanvas ? timeCanvas.getContext('2d') : null;
+      const timeWrap = document.getElementById('timeline-canvas-wrap');
+
+      const blockCanvas1 = document.getElementById('block-canvas-1');
+      const blockCanvas2 = document.getElementById('block-canvas-2');
+      const blockCanvas3 = document.getElementById('block-canvas-3');
+      const blockCanvas4 = document.getElementById('block-canvas-4');
+
+      // =======================================================================
+      // 0. TAB SWITCHING SYSTEM
+      // =======================================================================
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-tab');
+          
+          tabButtons.forEach(b => {
+            b.classList.remove('bg-sky-500/10', 'text-sky-400', 'border-sky-500/30');
+            b.classList.add('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800/60', 'border-transparent');
+          });
+          btn.classList.remove('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800/60', 'border-transparent');
+          btn.classList.add('bg-sky-500/10', 'text-sky-400', 'border-sky-500/30');
+
+          tabPanels.forEach(panel => {
+            if (panel.id === targetId) {
+              panel.classList.remove('hidden');
+            } else {
+              panel.classList.add('hidden');
+            }
+          });
+
+          // Trigger resize / render for newly active canvases safely
+          requestAnimationFrame(() => {
+            if (targetId === 'tab-topdown') {
+              if (typeof resizeTopDownCanvas === 'function') resizeTopDownCanvas();
+            } else if (targetId === 'tab-crosssection') {
+              if (typeof resizeCrossSectionCanvas === 'function') resizeCrossSectionCanvas();
+            } else if (targetId === 'tab-timeline') {
+              if (typeof resizeTimelineCanvas === 'function') resizeTimelineCanvas();
+              if (typeof renderAll4Blocks === 'function') renderAll4Blocks();
+            }
+          });
+        });
+      });
+
+      // Export single-file HTML feature
+      const btnExportHtml = document.getElementById('btn-export-html');
+      if (btnExportHtml) {
+        btnExportHtml.addEventListener('click', () => {
+          const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+          const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'CIE_9696_Meander_Simulator.html';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      }
+
+      // =======================================================================
+      // MODULE 1: TOP-DOWN MEANDER SIMULATOR (CANVAS & PARTICLES)
+      // =======================================================================
+      let topWidth = 800;
+      let topHeight = 450;
+      let isParticlePlaying = true;
+      let dischargeMultiplier = 1.0;
+      let userSpeedMultiplier = 1.0;
+
+      // Layer Toggles
+      const toggleThalweg = document.getElementById('layer-thalweg');
+      const toggleZones = document.getElementById('layer-zones');
+      const togglePools = document.getElementById('layer-pools');
+      const speedSlider = document.getElementById('slider-particle-speed');
+      const speedMultLabel = document.getElementById('label-speed-mult');
+
+      speedSlider.addEventListener('input', (e) => {
+        userSpeedMultiplier = parseFloat(e.target.value);
+        speedMultLabel.textContent = `${userSpeedMultiplier.toFixed(1)}x`;
+      });
+
+      // Play/Pause button
+      const btnPlayState = document.getElementById('btn-toggle-play-particles');
+      const textPlayState = document.getElementById('text-play-state');
+      const iconPlayState = document.getElementById('icon-play-state');
+
+      btnPlayState.addEventListener('click', () => {
+        isParticlePlaying = !isParticlePlaying;
+        textPlayState.textContent = isParticlePlaying ? '暂停流动' : '继续流动';
+        if (iconPlayState) {
+          iconPlayState.setAttribute('data-lucide', isParticlePlaying ? 'pause' : 'play');
+          if (window.lucide) window.lucide.createIcons();
+        }
+      });
+
+      // Discharge Buttons
+      const dischargeButtons = document.querySelectorAll('.discharge-btn');
+      dischargeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          dischargeButtons.forEach(b => {
+            b.className = 'discharge-btn px-2 py-0.5 rounded text-xs transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+          });
+          btn.className = 'discharge-btn px-2 py-0.5 rounded text-xs transition bg-sky-500/20 text-sky-400 border border-sky-500/40 font-semibold';
+          dischargeMultiplier = parseFloat(btn.getAttribute('data-val'));
+        });
+      });
+
+      function resizeTopDownCanvas() {
+        if (!canvasWrap || !topCanvas) return;
+        const rect = canvasWrap.getBoundingClientRect();
+        if (rect.width > 50 && rect.height > 50) {
+          topWidth = Math.floor(rect.width);
+          topHeight = Math.floor(rect.height);
+          topCanvas.width = topWidth;
+          topCanvas.height = topHeight;
+          initParticles();
+        }
+      }
+      window.addEventListener('resize', resizeTopDownCanvas);
+
+      // Meander Channel Geometry Definitions (S-curve parameterized along t from 0 to 1)
+      function getCenterlinePoint(t) {
+        // x goes from left (0.05 * w) to right (0.95 * w)
+        const x = (0.05 + 0.90 * t) * topWidth;
+        // S-bend equation: 2 primary loops
+        const angle = t * Math.PI * 2;
+        const amplitude = topHeight * 0.28;
+        const y = topHeight * 0.50 + Math.sin(angle) * amplitude;
+        return { x, y };
+      }
+
+      function getCenterlineTangent(t) {
+        const dt = 0.002;
+        const p1 = getCenterlinePoint(Math.max(0, t - dt));
+        const p2 = getCenterlinePoint(Math.min(1, t + dt));
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const len = Math.hypot(dx, dy) || 1;
+        return { tx: dx / len, ty: dy / len, nx: -dy / len, ny: dx / len };
+      }
+
+      const CHANNEL_HALF_WIDTH = 48; // half width in pixels
+
+      // Particles system
+      const NUM_PARTICLES = 160;
+      let particles = [];
+
+      class FlowParticle {
+        constructor() {
+          this.reset(true);
+        }
+
+        reset(randomStart = false) {
+          this.t = randomStart ? Math.random() : 0.001;
+          // offset from center across channel: -1 (left bank) to +1 (right bank)
+          this.offset = (Math.random() - 0.5) * 1.8;
+          this.size = Math.random() * 1.8 + 1.2;
+          this.life = Math.random() * 200 + 100;
+        }
+
+        update() {
+          if (!isParticlePlaying) return;
+
+          // Local curvature:
+          // In S-bend: t=0.25 -> peak at bottom (y large). Curvature pushes outer bank to bottom (+n).
+          // t=0.75 -> peak at top (y small). Curvature pushes outer bank to top (-n).
+          const sinVal = Math.sin(this.t * Math.PI * 2);
+          // Thalweg skew offset along normal:
+          const thalwegOffset = sinVal * 0.65; // moves towards outer bank
+
+          // Velocity is highest near thalweg, lowest near inner bank:
+          // Distance to thalweg across normal:
+          const distToThalweg = Math.abs(this.offset - thalwegOffset);
+          // Normalized speed factor (higher near outer, lower near inner)
+          let speedFactor = 1.6 - distToThalweg * 0.85;
+          if (speedFactor < 0.3) speedFactor = 0.3;
+
+          const baseDt = 0.0018 * dischargeMultiplier * userSpeedMultiplier;
+          this.t += baseDt * speedFactor;
+
+          // gentle drift towards outer bank due to surface flow
+          this.offset += (thalwegOffset - this.offset) * 0.004;
+          if (this.offset > 0.92) this.offset = 0.92;
+          if (this.offset < -0.92) this.offset = -0.92;
+
+          if (this.t >= 0.99) {
+            this.reset(false);
+          }
+        }
+
+        draw(ctx) {
+          const pt = getCenterlinePoint(this.t);
+          const tdir = getCenterlineTangent(this.t);
+
+          const px = pt.x + tdir.nx * (this.offset * CHANNEL_HALF_WIDTH);
+          const py = pt.y + tdir.ny * (this.offset * CHANNEL_HALF_WIDTH);
+
+          // Color coded by velocity
+          const sinVal = Math.sin(this.t * Math.PI * 2);
+          const thalwegOffset = sinVal * 0.65;
+          const dist = Math.abs(this.offset - thalwegOffset);
+
+          let color = '#38bdf8'; // mid blue
+          if (dist < 0.4) {
+            color = '#f87171'; // high velocity (red/coral)
+          } else if (dist > 1.0) {
+            color = '#facc15'; // low velocity (amber/gold)
+          }
+
+          ctx.beginPath();
+          ctx.arc(px, py, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 4;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      function initParticles() {
+        particles = [];
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+          particles.push(new FlowParticle());
+        }
+      }
+
+      const btnResetParticles = document.getElementById('btn-reset-particles');
+      if (btnResetParticles) {
+        btnResetParticles.addEventListener('click', initParticles);
+      }
+
+      // Draw Meander Bed and Features
+      function drawMeanderTopDown() {
+        if (!topCtx || topWidth <= 150 || topHeight <= 100) return;
+        topCtx.clearRect(0, 0, topWidth, topHeight);
+
+        // 1. Background Floodplain
+        topCtx.fillStyle = '#09131d'; // deep alluvial floodplain
+        topCtx.fillRect(0, 0, topWidth, topHeight);
+
+        // Grid lines for geospatial coordinate feel
+        topCtx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+        topCtx.lineWidth = 1;
+        for (let x = 0; x < topWidth; x += 60) {
+          topCtx.beginPath();
+          topCtx.moveTo(x, 0);
+          topCtx.lineTo(x, topHeight);
+          topCtx.stroke();
+        }
+        for (let y = 0; y < topHeight; y += 60) {
+          topCtx.beginPath();
+          topCtx.moveTo(0, y);
+          topCtx.lineTo(topWidth, y);
+          topCtx.stroke();
+        }
+
+        const steps = 140;
+        const leftBank = [];
+        const rightBank = [];
+        const thalwegPoints = [];
+
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const pt = getCenterlinePoint(t);
+          const tdir = getCenterlineTangent(t);
+
+          leftBank.push({
+            x: pt.x + tdir.nx * CHANNEL_HALF_WIDTH,
+            y: pt.y + tdir.ny * CHANNEL_HALF_WIDTH,
+            t
+          });
+          rightBank.push({
+            x: pt.x - tdir.nx * CHANNEL_HALF_WIDTH,
+            y: pt.y - tdir.ny * CHANNEL_HALF_WIDTH,
+            t
+          });
+
+          // Thalweg skew
+          const sinVal = Math.sin(t * Math.PI * 2);
+          const skewOffset = sinVal * 0.65 * CHANNEL_HALF_WIDTH;
+          thalwegPoints.push({
+            x: pt.x + tdir.nx * skewOffset,
+            y: pt.y + tdir.ny * skewOffset
+          });
+        }
+
+        // 2. Draw Point Bar Sediment Areas (Convex Banks)
+        if (toggleZones && toggleZones.checked) {
+          // Loop 1 convex bank is Right Bank around t=0.25 (top side)
+          topCtx.save();
+          topCtx.fillStyle = 'rgba(234, 179, 8, 0.28)'; // amber
+          topCtx.beginPath();
+          for (let i = 20; i <= 50; i++) {
+            const p = rightBank[i];
+            if (i === 20) topCtx.moveTo(p.x, p.y);
+            else topCtx.lineTo(p.x, p.y);
+          }
+          for (let i = 50; i >= 20; i--) {
+            const pt = getCenterlinePoint(i / steps);
+            topCtx.lineTo(pt.x, pt.y);
+          }
+          topCtx.closePath();
+          topCtx.fill();
+          topCtx.restore();
+
+          // Loop 2 convex bank is Left Bank around t=0.75 (bottom side)
+          topCtx.save();
+          topCtx.fillStyle = 'rgba(234, 179, 8, 0.28)';
+          topCtx.beginPath();
+          for (let i = 90; i <= 120; i++) {
+            const p = leftBank[i];
+            if (i === 90) topCtx.moveTo(p.x, p.y);
+            else topCtx.lineTo(p.x, p.y);
+          }
+          for (let i = 120; i >= 90; i--) {
+            const pt = getCenterlinePoint(i / steps);
+            topCtx.lineTo(pt.x, pt.y);
+          }
+          topCtx.closePath();
+          topCtx.fill();
+          topCtx.restore();
+        }
+
+        // 3. Draw River Channel Water Body
+        topCtx.beginPath();
+        leftBank.forEach((p, idx) => {
+          if (idx === 0) topCtx.moveTo(p.x, p.y);
+          else topCtx.lineTo(p.x, p.y);
+        });
+        for (let i = rightBank.length - 1; i >= 0; i--) {
+          topCtx.lineTo(rightBank[i].x, rightBank[i].y);
+        }
+        topCtx.closePath();
+        // River gradient fill
+        const riverGrad = topCtx.createLinearGradient(0, 0, topWidth, topHeight);
+        riverGrad.addColorStop(0, '#032d4b');
+        riverGrad.addColorStop(0.5, '#024b7a');
+        riverGrad.addColorStop(1, '#032d4b');
+        topCtx.fillStyle = riverGrad;
+        topCtx.fill();
+
+        // 4. Draw Channel Banks (Erosion vs Point Bar styling)
+        // Left Bank path
+        topCtx.beginPath();
+        leftBank.forEach((p, idx) => {
+          if (idx === 0) topCtx.moveTo(p.x, p.y);
+          else topCtx.lineTo(p.x, p.y);
+        });
+        topCtx.lineWidth = 3;
+        topCtx.strokeStyle = '#1e3a5f';
+        topCtx.stroke();
+
+        // Right Bank path
+        topCtx.beginPath();
+        rightBank.forEach((p, idx) => {
+          if (idx === 0) topCtx.moveTo(p.x, p.y);
+          else topCtx.lineTo(p.x, p.y);
+        });
+        topCtx.lineWidth = 3;
+        topCtx.strokeStyle = '#1e3a5f';
+        topCtx.stroke();
+
+        // 5. Highlight Erosion Zones (Red cliffs) and Deposition Zones (Gold bars)
+        if (toggleZones && toggleZones.checked) {
+          // Outer Bank 1 (Left Bank around t=0.25): Severe Erosion / River Cliff
+          topCtx.beginPath();
+          for (let i = 18; i <= 52; i++) {
+            const p = leftBank[i];
+            if (i === 18) topCtx.moveTo(p.x, p.y);
+            else topCtx.lineTo(p.x, p.y);
+          }
+          topCtx.strokeStyle = '#ef4444';
+          topCtx.lineWidth = 6;
+          topCtx.stroke();
+
+          // Outer Bank 2 (Right Bank around t=0.75): Severe Erosion / River Cliff
+          topCtx.beginPath();
+          for (let i = 88; i <= 122; i++) {
+            const p = rightBank[i];
+            if (i === 88) topCtx.moveTo(p.x, p.y);
+            else topCtx.lineTo(p.x, p.y);
+          }
+          topCtx.strokeStyle = '#ef4444';
+          topCtx.lineWidth = 6;
+          topCtx.stroke();
+
+          // Deposition text labels
+          topCtx.font = '600 11px Plus Jakarta Sans, sans-serif';
+          topCtx.fillStyle = '#f87171';
+          topCtx.fillText('💥 凹岸侧蚀崖 (River Cliff / Hydraulic Action)', leftBank[35].x - 130, leftBank[35].y + 22);
+          topCtx.fillText('💥 凹岸侵蚀崖 (River Cliff / Abrasion)', rightBank[105].x - 110, rightBank[105].y - 14);
+
+          topCtx.fillStyle = '#fde047';
+          topCtx.fillText('🏖️ 凸岸点坝沉积 (Point Bar)', rightBank[35].x - 60, rightBank[35].y - 12);
+          topCtx.fillText('🏖️ 凸岸点坝沉积 (Point Bar)', leftBank[105].x - 60, leftBank[105].y + 22);
+        }
+
+        // 6. Draw Pools and Riffles annotations
+        if (togglePools && togglePools.checked) {
+          // Pool 1 at bend 1 (t=0.25)
+          const pool1 = getCenterlinePoint(0.25);
+          topCtx.fillStyle = 'rgba(14, 165, 233, 0.25)';
+          topCtx.beginPath();
+          topCtx.arc(pool1.x, pool1.y, 28, 0, Math.PI * 2);
+          topCtx.fill();
+          topCtx.strokeStyle = '#0284c7';
+          topCtx.lineWidth = 1.5;
+          topCtx.setLineDash([3, 3]);
+          topCtx.stroke();
+          topCtx.setLineDash([]);
+          topCtx.fillStyle = '#38bdf8';
+          topCtx.font = '700 11px JetBrains Mono, monospace';
+          topCtx.fillText('深潭 (Pool 1)', pool1.x - 36, pool1.y + 4);
+
+          // Riffle at inflection (t=0.50)
+          const riffle = getCenterlinePoint(0.50);
+          topCtx.fillStyle = 'rgba(52, 211, 153, 0.2)';
+          topCtx.fillRect(riffle.x - 22, riffle.y - 30, 44, 60);
+          topCtx.strokeStyle = '#10b981';
+          topCtx.strokeRect(riffle.x - 22, riffle.y - 30, 44, 60);
+          topCtx.fillStyle = '#34d399';
+          topCtx.font = '700 11px JetBrains Mono, monospace';
+          topCtx.fillText('浅滩 (Riffle)', riffle.x - 30, riffle.y + 4);
+
+          // Pool 2 at bend 2 (t=0.75)
+          const pool2 = getCenterlinePoint(0.75);
+          topCtx.fillStyle = 'rgba(14, 165, 233, 0.25)';
+          topCtx.beginPath();
+          topCtx.arc(pool2.x, pool2.y, 28, 0, Math.PI * 2);
+          topCtx.fill();
+          topCtx.strokeStyle = '#0284c7';
+          topCtx.stroke();
+          topCtx.fillStyle = '#38bdf8';
+          topCtx.fillText('深潭 (Pool 2)', pool2.x - 36, pool2.y + 4);
+        }
+
+        // 7. Draw Thalweg Line (High contrast highlighted dashed line)
+        if (toggleThalweg && toggleThalweg.checked) {
+          topCtx.beginPath();
+          thalwegPoints.forEach((p, idx) => {
+            if (idx === 0) topCtx.moveTo(p.x, p.y);
+            else topCtx.lineTo(p.x, p.y);
+          });
+          topCtx.strokeStyle = '#38bdf8';
+          topCtx.lineWidth = 2.5;
+          topCtx.setLineDash([8, 5]);
+          topCtx.shadowColor = '#0284c7';
+          topCtx.shadowBlur = 8;
+          topCtx.stroke();
+          topCtx.setLineDash([]);
+          topCtx.shadowBlur = 0;
+
+          // Thalweg label
+          const tLabelPoint = thalwegPoints[Math.floor(thalwegPoints.length * 0.28)];
+          topCtx.font = '700 11px Plus Jakarta Sans, sans-serif';
+          topCtx.fillStyle = '#bae6fd';
+          topCtx.fillText('Thalweg (深泓线)', tLabelPoint.x + 8, tLabelPoint.y - 8);
+        }
+
+        // 8. Update and Draw Flow Particles
+        particles.forEach(p => {
+          p.update();
+          p.draw(topCtx);
+        });
+      }
+
+      // Main animation loop for Top-Down canvas
+      function animateTopDown() {
+        drawMeanderTopDown();
+        requestAnimationFrame(animateTopDown);
+      }
+      resizeTopDownCanvas();
+      animateTopDown();
+
+      // Mouse Hover Hydraulic Inspection Tooltip Logic
+      topCanvas.addEventListener('mousemove', (e) => {
+        const rect = topCanvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        // Find closest point along centerline
+        let bestT = 0;
+        let minDist = 99999;
+
+        for (let i = 0; i <= 100; i++) {
+          const t = i / 100;
+          const pt = getCenterlinePoint(t);
+          const d = Math.hypot(mx - pt.x, my - pt.y);
+          if (d < minDist) {
+            minDist = d;
+            bestT = t;
+          }
+        }
+
+        // Check if cursor is within channel boundary
+        if (minDist <= CHANNEL_HALF_WIDTH * 1.3) {
+          const pt = getCenterlinePoint(bestT);
+          const tdir = getCenterlineTangent(bestT);
+          // Dot product with normal to get cross-channel offset
+          const dx = mx - pt.x;
+          const dy = my - pt.y;
+          const normOffset = (dx * tdir.nx + dy * tdir.ny) / CHANNEL_HALF_WIDTH;
+
+          const sinVal = Math.sin(bestT * Math.PI * 2);
+          const thalwegOffset = sinVal * 0.65;
+          const distToThalweg = Math.abs(normOffset - thalwegOffset);
+
+          // Calculate realistic hydraulic values
+          const velocity = Math.max(0.2, (1.8 - distToThalweg * 0.95) * dischargeMultiplier).toFixed(2);
+          const depth = Math.max(0.6, (4.2 - distToThalweg * 2.2) * Math.sqrt(dischargeMultiplier)).toFixed(1);
+
+          tooltip.classList.remove('hidden');
+          // Position tooltip avoiding edges
+          const tooltipX = Math.min(topWidth - 280, Math.max(10, mx + 15));
+          const tooltipY = Math.min(topHeight - 160, Math.max(10, my - 20));
+          tooltip.style.left = `${tooltipX}px`;
+          tooltip.style.top = `${tooltipY}px`;
+
+          const velEl = document.getElementById('tooltip-velocity');
+          const depEl = document.getElementById('tooltip-depth');
+          const fricEl = document.getElementById('tooltip-friction');
+          const hydEl = document.getElementById('tooltip-hydraulic');
+          const procEl = document.getElementById('tooltip-process');
+          const badgeEl = document.getElementById('tooltip-zone-badge');
+
+          velEl.textContent = `${velocity} m/s`;
+          depEl.textContent = `${depth} m`;
+
+          if (distToThalweg < 0.45) {
+            badgeEl.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-950 text-red-400 border border-red-800';
+            badgeEl.textContent = '凹岸 / 深泓区 (Outer/Thalweg)';
+            fricEl.textContent = '极低 (深槽流线阻力最小)';
+            hydEl.textContent = '极高 (水力效率最高点)';
+            procEl.className = 'font-semibold text-red-400 mt-0.5 flex items-center gap-1';
+            procEl.innerHTML = '<i data-lucide="flame" class="w-3 h-3"></i> 强烈侧向侵蚀 (Hydraulic Action & Abrasion)';
+          } else if (distToThalweg > 0.95) {
+            badgeEl.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-950 text-amber-400 border border-amber-800';
+            badgeEl.textContent = '凸岸沉积区 (Inner / Point Bar)';
+            fricEl.textContent = '极高 (浅水床面大阻力)';
+            hydEl.textContent = '低 (能量消散急剧)';
+            procEl.className = 'font-semibold text-amber-400 mt-0.5 flex items-center gap-1';
+            procEl.innerHTML = '<i data-lucide="arrow-down-circle" class="w-3 h-3"></i> 减速沉积作用 (Deposition / Sand Sorting)';
+          } else {
+            badgeEl.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-950 text-sky-400 border border-sky-800';
+            badgeEl.textContent = '河槽主水流区 (Mid-Channel)';
+            fricEl.textContent = '中等';
+            hydEl.textContent = '中等';
+            procEl.className = 'font-semibold text-sky-400 mt-0.5 flex items-center gap-1';
+            procEl.innerHTML = '<i data-lucide="activity" class="w-3 h-3"></i> 推移质与悬移质输运 (Sediment Transport)';
+          }
+          if (window.lucide) window.lucide.createIcons();
+        } else {
+          tooltip.classList.add('hidden');
+        }
+      });
+
+      topCanvas.addEventListener('mouseleave', () => {
+        tooltip.classList.add('hidden');
+      });
+
+      // =======================================================================
+      // MODULE 2: ASYMMETRIC CROSS-SECTION & HELICOIDAL FLOW ANIMATION
+      // =======================================================================
+      let crossWidth = 700;
+      let crossHeight = 440;
+      let helicoidalActive = true;
+      let helicoidalAngle = 0;
+
+      const btnToggleHelicoidal = document.getElementById('btn-toggle-helicoidal');
+      if (btnToggleHelicoidal) {
+        btnToggleHelicoidal.addEventListener('click', () => {
+          helicoidalActive = !helicoidalActive;
+          btnToggleHelicoidal.innerHTML = helicoidalActive 
+            ? '<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin"></i><span>螺旋环流动画: 运行中</span>'
+            : '<i data-lucide="play" class="w-3.5 h-3.5"></i><span>螺旋环流动画: 已暂停</span>';
+          if (window.lucide) window.lucide.createIcons();
+        });
+      }
+
+      function resizeCrossSectionCanvas() {
+        if (!crossWrap || !crossCanvas) return;
+        const rect = crossWrap.getBoundingClientRect();
+        if (rect.width > 50 && rect.height > 50) {
+          crossWidth = Math.floor(rect.width);
+          crossHeight = Math.floor(rect.height);
+          crossCanvas.width = crossWidth;
+          crossCanvas.height = crossHeight;
+        }
+      }
+      window.addEventListener('resize', resizeCrossSectionCanvas);
+
+      // 5 Interactive Hotspots on Cross-Section
+      const HOTSPOTS_DATA = {
+        1: {
+          title: '① 凹岸侵蚀崖与下部掏空 (River Cliff & Undercutting Notch)',
+          badge: 'Outer/Concave Bank Erosion',
+          badgeColor: 'bg-red-950 text-red-400 border-red-800',
+          desc: '深泓线（Thalweg）在此处紧贴凹岸，水流速度最高且具有强大动能。下部产生掏空槽（Undercutting notch），主要侵蚀机制为<strong>水力作用（Hydraulic action）</strong>（水流挤压岩隙空气产生爆破冲击）与<strong>磨蚀（Corrasion/Abrasion）</strong>（颗粒如砂砾剧烈摩擦崖脚）。',
+          keywords: ['Hydraulic action', 'Corrasion/Abrasion', 'Undercutting notch', 'Steep River Cliff', 'Lateral erosion']
+        },
+        2: {
+          title: '② 崩塌物与重力垮落 (Mass Movement: Rotational Slumping)',
+          badge: 'Mass Movement / Instability',
+          badgeColor: 'bg-amber-950 text-amber-400 border-amber-800',
+          desc: '由于下部河崖基座被持续掏空，上方悬空的泥石岩体失去重力支撑，在剪切应力超过抗剪强度时发生<strong>崩塌（Slumping / Rotational slip）</strong>。崩落的沉积碎屑堆积在崖脚，随后被高能水流粉碎（Attrition）并冲刷搬运。',
+          keywords: ['Slumping', 'Rotational failure', 'Shear stress', 'Talus/Debris', 'Attrition']
+        },
+        3: {
+          title: '③ 深泓线与最大流速核心 (Thalweg Core)',
+          badge: 'Maximum Velocity & Depth',
+          badgeColor: 'bg-sky-950 text-sky-400 border-sky-800',
+          desc: '深泓线（Thalweg）是河流横截面上<strong>最大流速点与最大水深点</strong>的连接轨迹。在曲流中，由于离心力（Centrifugal force）的作用，深泓线严重不对称地偏向凹岸外侧，使凹岸的水力半径显著大于凸岸。',
+          keywords: ['Thalweg', 'Centrifugal force', 'Hydraulic radius', 'High kinetic energy', 'Asymmetric bed']
+        },
+        4: {
+          title: '④ 三维螺旋流次级环流 (Helicoidal Flow / Corkscrew Cell)',
+          badge: 'Secondary Circulation Mechanism',
+          badgeColor: 'bg-indigo-950 text-indigo-400 border-indigo-800',
+          desc: '曲流弯道中水体做三维螺旋螺旋前进。<strong>表层水流</strong>因离心作用推向凹岸堆积，形成微小的横向水面坡度（Superelevation）；凹岸水体向下沉降（Downwelling），随之<strong>底层水流</strong>受重力与压力驱动，贴着河床回旋流向凸岸，将凹岸侵蚀的推移质卷向凸岸沉积！',
+          keywords: ['Helicoidal flow', 'Corkscrew motion', 'Downwelling', 'Cross-channel return current', 'Sediment transfer']
+        },
+        5: {
+          title: '⑤ 凸岸点坝与分选沉积 (Point Bar / Slip-Off Slope)',
+          badge: 'Inner/Convex Bank Deposition',
+          badgeColor: 'bg-yellow-950 text-yellow-400 border-yellow-800',
+          desc: '凸岸水深极浅，床底摩擦极大，水动力能量剧烈衰减，导致河流携带的颗粒相继沉积，形成平缓倾斜的<strong>边滩/点坝（Point Bar / Slip-off slope）</strong>。沉积呈现鲜明的粒径分选：底部为粗砾石（Coarse gravel），向上渐变为细砂与粉砂（Fine sand and silt）。',
+          keywords: ['Point Bar', 'Slip-off slope', 'Sediment sorting', 'Bed friction', 'Low velocity deposition']
+        }
+      };
+
+      let activeHotspotId = 1;
+
+      function renderHotspotDetail(id) {
+        activeHotspotId = id;
+        const data = HOTSPOTS_DATA[id];
+        if (!data) return;
+
+        const badgeEl = document.getElementById('hotspot-badge');
+        const titleEl = document.getElementById('hotspot-title');
+        const bodyEl = document.getElementById('hotspot-body');
+
+        badgeEl.className = `px-2 py-0.5 rounded text-xs font-bold border ${data.badgeColor}`;
+        badgeEl.textContent = data.badge;
+        titleEl.textContent = data.title;
+
+        bodyEl.innerHTML = `
+          <p class="text-slate-300 text-xs leading-relaxed">${data.desc}</p>
+          <div class="pt-3 border-t border-slate-800">
+            <div class="text-[11px] font-bold text-sky-400 uppercase tracking-wider mb-2">CIE 9696 考纲核心采分词 (Mark Scheme Keywords):</div>
+            <div class="flex flex-wrap gap-1.5">
+              ${data.keywords.map(kw => `<span class="px-2 py-0.5 rounded text-[11px] bg-slate-800 text-sky-300 border border-slate-700">${kw}</span>`).join('')}
+            </div>
+          </div>
+          <div class="pt-2 flex items-center justify-between text-[11px] text-slate-400">
+            <span>切换热点:</span>
+            <div class="flex gap-1">
+              ${[1,2,3,4,5].map(i => `<button class="w-5 h-5 rounded-full text-xs font-bold transition ${i === id ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" onclick="window.selectHotspot(${i})">${i}</button>`).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      window.selectHotspot = function(id) {
+        renderHotspotDetail(id);
+      };
+
+      document.querySelectorAll('.select-hotspot-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.getAttribute('data-hotspot'), 10);
+          renderHotspotDetail(id);
+        });
+      });
+
+      // Render Cross-Section Canvas Animation
+      function drawCrossSection() {
+        if (!crossCtx || crossWidth <= 150 || crossHeight <= 100) return;
+        crossCtx.clearRect(0, 0, crossWidth, crossHeight);
+
+        // Coordinate scaling
+        const padX = 60;
+        const groundY = crossHeight * 0.28;
+        const waterY = crossHeight * 0.38;
+        const bedMaxDepthY = crossHeight * 0.78;
+        const channelWidth = crossWidth - padX * 2;
+
+        // Key Bank Points:
+        // Concave Bank (Left): steep cliff, notch, slumping talus
+        const cliffTopX = padX + 20;
+        const cliffTopY = groundY;
+        const notchX = padX + 10; // undercut notch indented inwards
+        const notchY = waterY + 40;
+        const thalwegX = padX + channelWidth * 0.22;
+        const thalwegY = bedMaxDepthY;
+
+        // Convex Bank (Right): gentle slip-off slope
+        const pointBarX = padX + channelWidth;
+        const pointBarY = waterY - 5;
+
+        // 1. Draw Geological Bedrock & Soil (Surrounding Land)
+        crossCtx.fillStyle = '#0f1f2e';
+        crossCtx.beginPath();
+        crossCtx.moveTo(0, groundY);
+        crossCtx.lineTo(cliffTopX, cliffTopY);
+        // notch indent
+        crossCtx.lineTo(notchX - 8, notchY);
+        crossCtx.lineTo(thalwegX, thalwegY);
+        // gentle slip off slope to right
+        crossCtx.lineTo(pointBarX, pointBarY);
+        crossCtx.lineTo(crossWidth, groundY);
+        crossCtx.lineTo(crossWidth, crossHeight);
+        crossCtx.lineTo(0, crossHeight);
+        crossCtx.closePath();
+        crossCtx.fill();
+
+        // 2. Stratified Sediment Layers on Point Bar (Graded Bedding)
+        crossCtx.save();
+        // Coarse gravel at bottom
+        crossCtx.fillStyle = 'rgba(202, 138, 4, 0.4)';
+        crossCtx.beginPath();
+        crossCtx.moveTo(thalwegX + 40, thalwegY - 10);
+        crossCtx.lineTo(pointBarX, pointBarY + 20);
+        crossCtx.lineTo(pointBarX, pointBarY);
+        crossCtx.lineTo(thalwegX + 120, thalwegY - 25);
+        crossCtx.closePath();
+        crossCtx.fill();
+
+        // Fine Sand / Silt at top of slip off slope
+        crossCtx.fillStyle = 'rgba(250, 204, 21, 0.6)';
+        crossCtx.beginPath();
+        crossCtx.moveTo(thalwegX + 140, thalwegY - 35);
+        crossCtx.lineTo(pointBarX + 10, pointBarY);
+        crossCtx.lineTo(pointBarX - 10, pointBarY - 6);
+        crossCtx.lineTo(thalwegX + 180, thalwegY - 50);
+        crossCtx.closePath();
+        crossCtx.fill();
+        crossCtx.restore();
+
+        // Slumped Debris Debris Cone at base of Cliff (Hotspot 2)
+        crossCtx.fillStyle = '#78350f';
+        crossCtx.beginPath();
+        crossCtx.moveTo(notchX, notchY + 25);
+        crossCtx.lineTo(notchX + 28, thalwegY);
+        crossCtx.lineTo(notchX - 10, thalwegY);
+        crossCtx.closePath();
+        crossCtx.fill();
+        // Debris dots
+        crossCtx.fillStyle = '#b45309';
+        crossCtx.beginPath();
+        crossCtx.arc(notchX + 10, thalwegY - 8, 4, 0, Math.PI * 2);
+        crossCtx.arc(notchX + 18, thalwegY - 4, 3, 0, Math.PI * 2);
+        crossCtx.fill();
+
+        // 3. Draw Channel Water Body
+        crossCtx.save();
+        const waterGrad = crossCtx.createLinearGradient(0, waterY, 0, bedMaxDepthY);
+        waterGrad.addColorStop(0, 'rgba(14, 165, 233, 0.45)');
+        waterGrad.addColorStop(1, 'rgba(2, 75, 122, 0.85)');
+        crossCtx.fillStyle = waterGrad;
+
+        crossCtx.beginPath();
+        crossCtx.moveTo(cliffTopX - 10, waterY);
+        crossCtx.lineTo(notchX - 8, notchY);
+        crossCtx.lineTo(thalwegX, thalwegY);
+        crossCtx.lineTo(pointBarX, waterY);
+        crossCtx.closePath();
+        crossCtx.fill();
+
+        // Water surface line with subtle waves
+        crossCtx.beginPath();
+        crossCtx.moveTo(cliffTopX - 14, waterY);
+        crossCtx.lineTo(pointBarX + 5, waterY);
+        crossCtx.strokeStyle = '#38bdf8';
+        crossCtx.lineWidth = 2.5;
+        crossCtx.stroke();
+        crossCtx.restore();
+
+        // Bed rock outline
+        crossCtx.beginPath();
+        crossCtx.moveTo(0, groundY);
+        crossCtx.lineTo(cliffTopX, cliffTopY);
+        crossCtx.lineTo(notchX - 8, notchY);
+        crossCtx.lineTo(thalwegX, thalwegY);
+        crossCtx.lineTo(pointBarX, pointBarY);
+        crossCtx.lineTo(crossWidth, groundY);
+        crossCtx.strokeStyle = '#334155';
+        crossCtx.lineWidth = 2;
+        crossCtx.stroke();
+
+        // 4. ANIMATED 3D HELICOIDAL FLOW CIRCULATION ARROWS
+        if (helicoidalActive) {
+          helicoidalAngle += 0.04;
+        }
+
+        // Elliptical secondary circulation cell in water body
+        const cellCenterX = (thalwegX + pointBarX) * 0.45;
+        const cellCenterY = (waterY + thalwegY) * 0.52;
+        const radiusX = Math.max(1, Math.abs((pointBarX - thalwegX) * 0.42));
+        const radiusY = Math.max(1, Math.abs((thalwegY - waterY) * 0.36));
+
+        crossCtx.save();
+        // Draw orbital trajectory
+        crossCtx.strokeStyle = 'rgba(129, 140, 248, 0.35)';
+        crossCtx.lineWidth = 2;
+        crossCtx.setLineDash([4, 4]);
+        crossCtx.beginPath();
+        if (radiusX > 0 && radiusY > 0) {
+          crossCtx.ellipse(cellCenterX, cellCenterY, radiusX, radiusY, 0, 0, Math.PI * 2);
+        }
+        crossCtx.stroke();
+        crossCtx.setLineDash([]);
+
+        // Animated particles moving in corkscrew loop
+        // In meander: Surface water moves Left (to concave bank), Bottom water moves Right (to point bar)
+        // Hence counter-clockwise circulation in this 2D projection!
+        const numHelicoParticles = 8;
+        for (let i = 0; i < numHelicoParticles; i++) {
+          const pAngle = helicoidalAngle + (i / numHelicoParticles) * Math.PI * 2;
+          const px = cellCenterX + Math.cos(pAngle) * radiusX;
+          const py = cellCenterY + Math.sin(pAngle) * radiusY;
+
+          // Particle depth shading
+          const isSurface = Math.sin(pAngle) < 0;
+          const pColor = isSurface ? '#38bdf8' : '#facc15';
+
+          crossCtx.beginPath();
+          crossCtx.arc(px, py, 3.5, 0, Math.PI * 2);
+          crossCtx.fillStyle = pColor;
+          crossCtx.shadowColor = pColor;
+          crossCtx.shadowBlur = 6;
+          crossCtx.fill();
+        }
+
+        // Arrow indicators along the loop
+        // Surface current heading to outer bank (Left):
+        crossCtx.fillStyle = '#38bdf8';
+        crossCtx.beginPath();
+        crossCtx.moveTo(cellCenterX - 20, cellCenterY - radiusY - 8);
+        crossCtx.lineTo(cellCenterX - 35, cellCenterY - radiusY);
+        crossCtx.lineTo(cellCenterX - 20, cellCenterY - radiusY + 8);
+        crossCtx.closePath();
+        crossCtx.fill();
+        crossCtx.font = '700 11px Plus Jakarta Sans, sans-serif';
+        crossCtx.fillText('表层流 ➔ 冲向凹岸 (Surface flow to outer bank)', cellCenterX - 110, cellCenterY - radiusY - 14);
+
+        // Bed return current heading to point bar (Right):
+        crossCtx.fillStyle = '#facc15';
+        crossCtx.beginPath();
+        crossCtx.moveTo(cellCenterX + 20, cellCenterY + radiusY - 8);
+        crossCtx.lineTo(cellCenterX + 35, cellCenterY + radiusY);
+        crossCtx.lineTo(cellCenterX + 20, cellCenterY + radiusY + 8);
+        crossCtx.closePath();
+        crossCtx.fill();
+        crossCtx.fillText('底层回流 ➔ 卷带推移质至凸岸 (Bedload to point bar)', cellCenterX - 80, cellCenterY + radiusY + 22);
+        crossCtx.restore();
+
+        // 5. Draw Hotspot interactive pin badges on the canvas
+        const hotspotCoords = {
+          1: { x: cliffTopX - 4, y: notchY - 10 },
+          2: { x: notchX + 12, y: thalwegY - 12 },
+          3: { x: thalwegX, y: thalwegY + 8 },
+          4: { x: cellCenterX, y: cellCenterY },
+          5: { x: pointBarX - 35, y: pointBarY + 12 }
+        };
+
+        for (let i = 1; i <= 5; i++) {
+          const pt = hotspotCoords[i];
+          const isSelected = (activeHotspotId === i);
+          
+          crossCtx.save();
+          // Glow ring
+          crossCtx.beginPath();
+          crossCtx.arc(pt.x, pt.y, isSelected ? 15 : 11, 0, Math.PI * 2);
+          crossCtx.fillStyle = isSelected ? 'rgba(56, 189, 248, 0.4)' : 'rgba(15, 23, 42, 0.8)';
+          crossCtx.fill();
+          crossCtx.strokeStyle = isSelected ? '#38bdf8' : '#94a3b8';
+          crossCtx.lineWidth = isSelected ? 2.5 : 1.5;
+          crossCtx.stroke();
+
+          // Text number
+          crossCtx.fillStyle = '#ffffff';
+          crossCtx.font = 'bold 11px JetBrains Mono, monospace';
+          crossCtx.textAlign = 'center';
+          crossCtx.textBaseline = 'middle';
+          crossCtx.fillText(i.toString(), pt.x, pt.y);
+          crossCtx.restore();
+        }
+      }
+
+      function animateCrossSection() {
+        drawCrossSection();
+        requestAnimationFrame(animateCrossSection);
+      }
+      resizeCrossSectionCanvas();
+      animateCrossSection();
+      renderHotspotDetail(1);
+
+      // Handle Hotspot clicks on cross-section canvas
+      crossCanvas.addEventListener('click', (e) => {
+        const rect = crossCanvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        const padX = 60;
+        const waterY = crossHeight * 0.38;
+        const bedMaxDepthY = crossHeight * 0.78;
+        const channelWidth = crossWidth - padX * 2;
+        const cliffTopX = padX + 20;
+        const notchX = padX + 10;
+        const notchY = waterY + 40;
+        const thalwegX = padX + channelWidth * 0.22;
+        const thalwegY = bedMaxDepthY;
+        const pointBarX = padX + channelWidth;
+        const pointBarY = waterY - 5;
+        const cellCenterX = (thalwegX + pointBarX) * 0.45;
+        const cellCenterY = (waterY + thalwegY) * 0.52;
+
+        const hotspotCoords = {
+          1: { x: cliffTopX - 4, y: notchY - 10 },
+          2: { x: notchX + 12, y: thalwegY - 12 },
+          3: { x: thalwegX, y: thalwegY + 8 },
+          4: { x: cellCenterX, y: cellCenterY },
+          5: { x: pointBarX - 35, y: pointBarY + 12 }
+        };
+
+        for (let i = 1; i <= 5; i++) {
+          const pt = hotspotCoords[i];
+          const dist = Math.hypot(mx - pt.x, my - pt.y);
+          if (dist < 26) {
+            renderHotspotDetail(i);
+            break;
+          }
+        }
+      });
+
+      // =======================================================================
+      // MODULE 3: 3D GEOLOGICAL BLOCK MODEL OF OXBOW LAKE FORMATION (REPLICATING TEXTBOOK)
+      // =======================================================================
+      const timeSlider = document.getElementById('slider-timeline');
+      const timePercentLabel = document.getElementById('label-slider-percent');
+      const timeStageIndicator = document.getElementById('label-stage-indicator');
+      const btnTimePlay = document.getElementById('btn-timeline-play');
+      const iconTimePlay = document.getElementById('icon-timeline-play');
+      const textTimePlay = document.getElementById('text-timeline-play');
+
+      // View mode toggles
+      const btnMode4Blocks = document.getElementById('btn-mode-4blocks');
+      const btnModeInteractive = document.getElementById('btn-mode-interactive');
+      const viewTimeline4Blocks = document.getElementById('view-timeline-4blocks');
+      const viewTimelineInteractive = document.getElementById('view-timeline-interactive');
+
+      // Layout & Language toggles
+      const btnLayoutVertical = document.getElementById('btn-layout-vertical');
+      const btnLayoutGrid = document.getElementById('btn-layout-grid');
+      const blocksContainer = document.getElementById('blocks-container');
+      const btnToggleLang = document.getElementById('btn-toggle-timeline-lang');
+      const labelTimelineLang = document.getElementById('label-timeline-lang');
+
+      let timelineLang = 'bilingual'; // 'bilingual' or 'en'
+      let currentStageVal = 1.0;
+      let isTimelinePlaying = false;
+      let timelineAnimReq = null;
+      let flowAnimTime = 0;
+
+      // View mode switching
+      if (btnMode4Blocks && btnModeInteractive) {
+        btnMode4Blocks.addEventListener('click', () => {
+          btnMode4Blocks.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm';
+          btnModeInteractive.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+          viewTimeline4Blocks.classList.remove('hidden');
+          viewTimelineInteractive.classList.add('hidden');
+          renderAll4Blocks();
+        });
+
+        btnModeInteractive.addEventListener('click', () => {
+          btnModeInteractive.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm';
+          btnMode4Blocks.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+          viewTimelineInteractive.classList.remove('hidden');
+          viewTimeline4Blocks.classList.add('hidden');
+          resizeTimelineCanvas();
+          updateTimelineStage(currentStageVal);
+        });
+      }
+
+      // Layout switching for 4 blocks
+      if (btnLayoutVertical && btnLayoutGrid && blocksContainer) {
+        btnLayoutVertical.addEventListener('click', () => {
+          btnLayoutVertical.className = 'px-2.5 py-1 rounded bg-slate-800 text-emerald-400 border border-emerald-500/40 font-medium transition';
+          btnLayoutGrid.className = 'px-2.5 py-1 rounded bg-slate-900 text-slate-400 hover:text-white border border-slate-800 font-medium transition';
+          blocksContainer.className = 'flex flex-col gap-6';
+          requestAnimationFrame(renderAll4Blocks);
+        });
+
+        btnLayoutGrid.addEventListener('click', () => {
+          btnLayoutGrid.className = 'px-2.5 py-1 rounded bg-slate-800 text-emerald-400 border border-emerald-500/40 font-medium transition';
+          btnLayoutVertical.className = 'px-2.5 py-1 rounded bg-slate-900 text-slate-400 hover:text-white border border-slate-800 font-medium transition';
+          blocksContainer.className = 'grid grid-cols-1 md:grid-cols-2 gap-6';
+          requestAnimationFrame(renderAll4Blocks);
+        });
+      }
+
+      // Language toggle
+      if (btnToggleLang && labelTimelineLang) {
+        btnToggleLang.addEventListener('click', () => {
+          if (timelineLang === 'bilingual') {
+            timelineLang = 'en';
+            labelTimelineLang.textContent = '纯英文原版 (English)';
+          } else {
+            timelineLang = 'bilingual';
+            labelTimelineLang.textContent = '中英双语标签 (Bilingual)';
+          }
+          renderAll4Blocks();
+          if (timeCanvas) drawInteractive3DBlock();
+        });
+      }
+
+      // Helper function to draw textbook style pointer leader line with crisp arrowhead
+      function drawTextbookLeaderLine(ctx, startX, startY, targetX, targetY, isBranch = false, branch2 = null) {
+        ctx.save();
+        ctx.strokeStyle = '#181e29';
+        ctx.lineWidth = 1.5;
+        ctx.fillStyle = '#181e29';
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        // Calculate mid elbow
+        const midX = startX + (targetX - startX) * 0.45;
+        ctx.lineTo(midX, startY);
+        ctx.lineTo(targetX, targetY);
+        ctx.stroke();
+
+        // Draw crisp arrowhead pointing to target
+        const angle = Math.atan2(targetY - startY, targetX - midX);
+        const headLen = 7;
+        ctx.beginPath();
+        ctx.moveTo(targetX, targetY);
+        ctx.lineTo(targetX - headLen * Math.cos(angle - Math.PI / 7), targetY - headLen * Math.sin(angle - Math.PI / 7));
+        ctx.lineTo(targetX - headLen * Math.cos(angle + Math.PI / 7), targetY - headLen * Math.sin(angle + Math.PI / 7));
+        ctx.closePath();
+        ctx.fill();
+
+        // Optional secondary branch (for plugs)
+        if (isBranch && branch2) {
+          ctx.beginPath();
+          ctx.moveTo(midX, startY);
+          ctx.lineTo(branch2.x, branch2.y);
+          ctx.stroke();
+
+          const bAngle = Math.atan2(branch2.y - startY, branch2.x - midX);
+          ctx.beginPath();
+          ctx.moveTo(branch2.x, branch2.y);
+          ctx.lineTo(branch2.x - headLen * Math.cos(bAngle - Math.PI / 7), branch2.y - headLen * Math.sin(bAngle - Math.PI / 7));
+          ctx.lineTo(branch2.x - headLen * Math.cos(bAngle + Math.PI / 7), branch2.y - headLen * Math.sin(bAngle + Math.PI / 7));
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      // Helper function to draw stream flow arrows in 3D perspective
+      function drawStreamFlowArrow(ctx, p1, p2, color = '#1e3a8a') {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const len = Math.hypot(dx, dy);
+        if (len < 6) return;
+
+        const mx = (p1.x + p2.x) * 0.5;
+        const my = (p1.y + p2.y) * 0.5;
+        const angle = Math.atan2(dy, dx);
+        const headLen = 6.5;
+
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.8;
+
+        // Line segment
+        ctx.beginPath();
+        ctx.moveTo(mx - dx * 0.35, my - dy * 0.35);
+        ctx.lineTo(mx + dx * 0.35, my + dy * 0.35);
+        ctx.stroke();
+
+        // Arrowhead
+        ctx.beginPath();
+        ctx.moveTo(mx + dx * 0.35, my + dy * 0.35);
+        ctx.lineTo(
+          mx + dx * 0.35 - headLen * Math.cos(angle - Math.PI / 6),
+          my + dy * 0.35 - headLen * Math.sin(angle - Math.PI / 6)
+        );
+        ctx.lineTo(
+          mx + dx * 0.35 - headLen * Math.cos(angle + Math.PI / 6),
+          my + dy * 0.35 - headLen * Math.sin(angle + Math.PI / 6)
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // =======================================================================
+      // MAIN 3D ISOMETRIC GEOLOGICAL BLOCK RENDERER
+      // =======================================================================
+      function draw3DGeologicalBlock(canvas, stage, options = {}) {
+        if (!canvas) return;
+        const parent = canvas.parentElement;
+        const rect = canvas.getBoundingClientRect();
+        let w = rect.width;
+        let h = rect.height;
+
+        if (w <= 50 || h <= 50) {
+          if (parent && parent.clientWidth > 50) {
+            w = parent.clientWidth;
+            h = Math.round(w * 0.5625);
+          } else {
+            w = 640;
+            h = 360;
+          }
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+          canvas.width = Math.round(w * dpr);
+          canvas.height = Math.round(h * dpr);
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.save();
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+
+        // 1. Clear background (clean dark canvas with soft spotlight gradient)
+        const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+        bgGrad.addColorStop(0, '#0a101d');
+        bgGrad.addColorStop(1, '#050811');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 2. Isometric Projection Matrix Parameters
+        // Top surface polygon corners
+        const pTL = { x: w * 0.27, y: h * 0.08 }; // Back-left
+        const pTR = { x: w * 0.93, y: h * 0.21 }; // Back-right
+        const pBL = { x: w * 0.07, y: h * 0.63 }; // Front-left
+        const pBR = { x: w * 0.73, y: h * 0.76 }; // Front-right
+        const crustH = Math.max(26, Math.min(42, h * 0.12)); // Thickness of geological block
+
+        // Coordinate transformation function: (u, v) in [0, 1]x[0, 1] to screen (x, y)
+        function to3D(u, v) {
+          const topX = (1 - u) * pTL.x + u * pTR.x;
+          const topY = (1 - u) * pTL.y + u * pTR.y;
+          const botX = (1 - u) * pBL.x + u * pBR.x;
+          const botY = (1 - u) * pBL.y + u * pBR.y;
+          return {
+            x: (1 - v) * topX + v * botX,
+            y: (1 - v) * topY + v * botY
+          };
+        }
+
+        // 3. Draw Soft Ground Shadow under the Block
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.filter = 'blur(12px)';
+        ctx.beginPath();
+        ctx.moveTo(pBL.x - 10, pBL.y + crustH + 6);
+        ctx.lineTo(pBR.x + 10, pBR.y + crustH + 6);
+        ctx.lineTo(pTR.x + 14, pTR.y + crustH + 2);
+        ctx.lineTo(pTL.x, pTL.y + 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // 4. Draw Sedimentary Block Crust Sides (Earth Strata)
+        // A. Front Face (South-facing crust cross-section)
+        ctx.save();
+        const frontGrad = ctx.createLinearGradient(0, pBL.y, 0, pBR.y + crustH);
+        frontGrad.addColorStop(0, '#c39563');
+        frontGrad.addColorStop(0.35, '#b18352');
+        frontGrad.addColorStop(0.7, '#9d7142');
+        frontGrad.addColorStop(1, '#855c32');
+        ctx.fillStyle = frontGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(pBL.x, pBL.y);
+        ctx.lineTo(pBR.x, pBR.y);
+        ctx.lineTo(pBR.x, pBR.y + crustH);
+        ctx.lineTo(pBL.x, pBL.y + crustH);
+        ctx.closePath();
+        ctx.fill();
+
+        // Sedimentary strata horizontal bands across front face
+        const strataColors = ['#caa071', '#a97a4a', '#bfa177', '#93663a'];
+        for (let i = 1; i <= 3; i++) {
+          const ratio = i / 4;
+          ctx.beginPath();
+          ctx.moveTo(pBL.x, pBL.y + crustH * ratio);
+          ctx.lineTo(pBR.x, pBR.y + crustH * ratio);
+          ctx.strokeStyle = strataColors[i - 1];
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+
+        // Topsoil organic humus layer (top 3.5px)
+        ctx.beginPath();
+        ctx.moveTo(pBL.x, pBL.y);
+        ctx.lineTo(pBR.x, pBR.y);
+        ctx.lineTo(pBR.x, pBR.y + 3.5);
+        ctx.lineTo(pBL.x, pBL.y + 3.5);
+        ctx.closePath();
+        ctx.fillStyle = '#3c2817';
+        ctx.fill();
+
+        // River notch at river exit on front face (u = 0.22, v = 1.0)
+        const exitLeft = to3D(0.18, 1.0);
+        const exitRight = to3D(0.26, 1.0);
+        const notchDepth = 8;
+        ctx.beginPath();
+        ctx.moveTo(exitLeft.x, exitLeft.y);
+        ctx.quadraticCurveTo((exitLeft.x + exitRight.x) * 0.5, exitLeft.y + notchDepth, exitRight.x, exitRight.y);
+        ctx.lineTo(exitRight.x, exitRight.y);
+        ctx.closePath();
+        ctx.fillStyle = '#5388c6';
+        ctx.fill();
+        ctx.strokeStyle = '#261b12';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // Front Face border
+        ctx.beginPath();
+        ctx.moveTo(pBL.x, pBL.y);
+        ctx.lineTo(pBR.x, pBR.y);
+        ctx.lineTo(pBR.x, pBR.y + crustH);
+        ctx.lineTo(pBL.x, pBL.y + crustH);
+        ctx.closePath();
+        ctx.strokeStyle = '#261b12';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        // B. Right Face (East-facing shaded crust cross-section)
+        ctx.save();
+        const rightGrad = ctx.createLinearGradient(pBR.x, pBR.y, pTR.x, pTR.y);
+        rightGrad.addColorStop(0, '#865f37');
+        rightGrad.addColorStop(1, '#654424');
+        ctx.fillStyle = rightGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(pBR.x, pBR.y);
+        ctx.lineTo(pTR.x, pTR.y);
+        ctx.lineTo(pTR.x, pTR.y + crustH);
+        ctx.lineTo(pBR.x, pBR.y + crustH);
+        ctx.closePath();
+        ctx.fill();
+
+        // Strata on right face
+        for (let i = 1; i <= 3; i++) {
+          const ratio = i / 4;
+          ctx.beginPath();
+          ctx.moveTo(pBR.x, pBR.y + crustH * ratio);
+          ctx.lineTo(pTR.x, pTR.y + crustH * ratio);
+          ctx.strokeStyle = '#5a3b1d';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+
+        // Topsoil on right face
+        ctx.beginPath();
+        ctx.moveTo(pBR.x, pBR.y);
+        ctx.lineTo(pTR.x, pTR.y);
+        ctx.lineTo(pTR.x, pTR.y + 3.5);
+        ctx.lineTo(pBR.x, pBR.y + 3.5);
+        ctx.closePath();
+        ctx.fillStyle = '#2c1c0f';
+        ctx.fill();
+
+        // Right Face border
+        ctx.beginPath();
+        ctx.moveTo(pBR.x, pBR.y);
+        ctx.lineTo(pTR.x, pTR.y);
+        ctx.lineTo(pTR.x, pTR.y + crustH);
+        ctx.lineTo(pBR.x, pBR.y + crustH);
+        ctx.closePath();
+        ctx.strokeStyle = '#261b12';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        // 5. Draw Top Surface (Floodplain green meadow)
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(pTL.x, pTL.y);
+        ctx.lineTo(pTR.x, pTR.y);
+        ctx.lineTo(pBR.x, pBR.y);
+        ctx.lineTo(pBL.x, pBL.y);
+        ctx.closePath();
+        ctx.fillStyle = '#5e9447'; // Lush meadow green matching image
+        ctx.fill();
+
+        // Subtle topographic relief shades on floodplain
+        ctx.beginPath();
+        const relief1 = to3D(0.70, 0.05);
+        const relief2 = to3D(0.96, 0.15);
+        const relief3 = to3D(0.85, 0.40);
+        ctx.moveTo(relief1.x, relief1.y);
+        ctx.quadraticCurveTo(relief2.x, relief2.y, relief3.x, relief3.y);
+        ctx.lineTo(pTR.x, pTR.y);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(74, 125, 52, 0.45)';
+        ctx.fill();
+
+        ctx.strokeStyle = '#261b12';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.restore();
+
+        // 6. Channel & River Geometries According to Stage
+        const s = typeof stage === 'number' ? stage : 1.0;
+        const riverW = 0.075; // Normalized channel width
+
+        // Utility: generate smooth points along an array of control nodes
+        function generateSpline(nodes, steps = 50) {
+          const pts = [];
+          for (let i = 0; i < nodes.length - 1; i++) {
+            const p0 = nodes[Math.max(0, i - 1)];
+            const p1 = nodes[i];
+            const p2 = nodes[i + 1];
+            const p3 = nodes[Math.min(nodes.length - 1, i + 2)];
+            for (let t = 0; t <= 1; t += 1 / steps) {
+              const t2 = t * t;
+              const t3 = t2 * t;
+              const u = 0.5 * ((2 * p1.u) + (-p0.u + p2.u) * t + (2 * p0.u - 5 * p1.u + 4 * p2.u - p3.u) * t2 + (-p0.u + 3 * p1.u - 3 * p2.u + p3.u) * t3);
+              const v = 0.5 * ((2 * p1.v) + (-p0.v + p2.v) * t + (2 * p0.v - 5 * p1.v + 4 * p2.v - p3.v) * t2 + (-p0.v + 3 * p1.v - 3 * p2.v + p3.v) * t3);
+              pts.push({ u, v });
+            }
+          }
+          return pts;
+        }
+
+        // Draw Channel Polygon with Left/Right Banks
+        function renderChannelPolygon(splinePts, wNormal, waterColor = '#72acec', strokeBank = true) {
+          if (splinePts.length < 2) return;
+          const leftBank = [];
+          const rightBank = [];
+
+          for (let i = 0; i < splinePts.length; i++) {
+            const curr = splinePts[i];
+            const next = splinePts[Math.min(splinePts.length - 1, i + 1)];
+            const prev = splinePts[Math.max(0, i - 1)];
+
+            const du = next.u - prev.u;
+            const dv = next.v - prev.v;
+            const len = Math.hypot(du, dv) || 1;
+            const nu = -dv / len;
+            const nv = du / len;
+
+            const halfW = typeof wNormal === 'function' ? wNormal(i / splinePts.length) : wNormal * 0.5;
+
+            leftBank.push(to3D(curr.u + nu * halfW, curr.v + nv * halfW));
+            rightBank.push(to3D(curr.u - nu * halfW, curr.v - nv * halfW));
+          }
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(leftBank[0].x, leftBank[0].y);
+          for (let i = 1; i < leftBank.length; i++) {
+            ctx.lineTo(leftBank[i].x, leftBank[i].y);
+          }
+          for (let i = rightBank.length - 1; i >= 0; i--) {
+            ctx.lineTo(rightBank[i].x, rightBank[i].y);
+          }
+          ctx.closePath();
+
+          ctx.fillStyle = waterColor;
+          ctx.fill();
+
+          if (strokeBank) {
+            ctx.strokeStyle = '#2b4461';
+            ctx.lineWidth = 1.0;
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          return { leftBank, rightBank };
+        }
+
+        // =====================================================================
+        // STAGE-SPECIFIC DRAWING (Matching the 4 blocks in image.png)
+        // =====================================================================
+
+        if (s <= 1.4) {
+          // -------------------------------------------------------------------
+          // STAGE 1: Sinuous Meander (Initial bend)
+          // -------------------------------------------------------------------
+          const s1Nodes = [
+            { u: 0.24, v: 0.00 },
+            { u: 0.32, v: 0.07 },
+            { u: 0.52, v: 0.12 },
+            { u: 0.74, v: 0.19 }, // Upper bend apex
+            { u: 0.65, v: 0.28 },
+            { u: 0.44, v: 0.36 },
+            { u: 0.22, v: 0.46 }, // Lower bend apex
+            { u: 0.16, v: 0.58 },
+            { u: 0.18, v: 0.76 },
+            { u: 0.22, v: 1.00 }
+          ];
+          const s1Spline = generateSpline(s1Nodes, 25);
+
+          // Point bar 1 (inner side of upper bend)
+          ctx.save();
+          ctx.beginPath();
+          const pb1_a = to3D(0.48, 0.15);
+          const pb1_b = to3D(0.66, 0.22);
+          const pb1_c = to3D(0.56, 0.28);
+          ctx.moveTo(pb1_a.x, pb1_a.y);
+          ctx.quadraticCurveTo(pb1_b.x, pb1_b.y, pb1_c.x, pb1_c.y);
+          ctx.closePath();
+          ctx.fillStyle = '#d8c38c'; // Sandy point bar alluvium
+          ctx.fill();
+          ctx.restore();
+
+          // Render channel
+          const banks = renderChannelPolygon(s1Spline, riverW, '#74acec');
+
+          // Cutbank highlights (vivid red line on outer concave banks)
+          ctx.save();
+          ctx.strokeStyle = '#e11d48'; // Bright red cutbank
+          ctx.lineWidth = 3.2;
+
+          // Upper cutbank
+          if (banks && banks.leftBank) {
+            ctx.beginPath();
+            const startIdx = Math.floor(banks.leftBank.length * 0.22);
+            const endIdx = Math.floor(banks.leftBank.length * 0.42);
+            ctx.moveTo(banks.leftBank[startIdx].x, banks.leftBank[startIdx].y);
+            for (let i = startIdx + 1; i <= endIdx; i++) {
+              ctx.lineTo(banks.leftBank[i].x, banks.leftBank[i].y);
+            }
+            ctx.stroke();
+          }
+
+          // Lower cutbank
+          if (banks && banks.rightBank) {
+            ctx.beginPath();
+            const startIdx = Math.floor(banks.rightBank.length * 0.62);
+            const endIdx = Math.floor(banks.rightBank.length * 0.82);
+            ctx.moveTo(banks.rightBank[startIdx].x, banks.rightBank[startIdx].y);
+            for (let i = startIdx + 1; i <= endIdx; i++) {
+              ctx.lineTo(banks.rightBank[i].x, banks.rightBank[i].y);
+            }
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          // Flow arrows
+          const arrow1_p1 = to3D(0.40, 0.09);
+          const arrow1_p2 = to3D(0.52, 0.12);
+          drawStreamFlowArrow(ctx, arrow1_p1, arrow1_p2);
+
+          const arrow2_p1 = to3D(0.68, 0.25);
+          const arrow2_p2 = to3D(0.54, 0.32);
+          drawStreamFlowArrow(ctx, arrow2_p1, arrow2_p2);
+
+          const arrow3_p1 = to3D(0.18, 0.70);
+          const arrow3_p2 = to3D(0.20, 0.85);
+          drawStreamFlowArrow(ctx, arrow3_p1, arrow3_p2);
+
+        } else if (s <= 2.4) {
+          // -------------------------------------------------------------------
+          // STAGE 2: Pronounced Meander with Narrow Neck (neck, point bar, cutbank)
+          // -------------------------------------------------------------------
+          const s2Nodes = [
+            { u: 0.24, v: 0.00 },
+            { u: 0.26, v: 0.10 },
+            { u: 0.28, v: 0.19 }, // Upper limb enters neck
+            { u: 0.48, v: 0.17 },
+            { u: 0.74, v: 0.21 },
+            { u: 0.88, v: 0.28 }, // Outer apex
+            { u: 0.76, v: 0.37 },
+            { u: 0.50, v: 0.39 },
+            { u: 0.28, v: 0.32 }, // Lower limb exits neck
+            { u: 0.17, v: 0.44 },
+            { u: 0.16, v: 0.65 },
+            { u: 0.22, v: 1.00 }
+          ];
+          const s2Spline = generateSpline(s2Nodes, 25);
+
+          // Point bar (Sandy tan crescent inside the wide meander loop)
+          ctx.save();
+          ctx.beginPath();
+          const pbA = to3D(0.40, 0.24);
+          const pbB = to3D(0.66, 0.26);
+          const pbC = to3D(0.78, 0.30);
+          const pbD = to3D(0.62, 0.35);
+          const pbE = to3D(0.40, 0.33);
+          ctx.moveTo(pbA.x, pbA.y);
+          ctx.lineTo(pbB.x, pbB.y);
+          ctx.quadraticCurveTo(pbC.x, pbC.y, pbD.x, pbD.y);
+          ctx.lineTo(pbE.x, pbE.y);
+          ctx.closePath();
+          ctx.fillStyle = '#d8c38c'; // Tan sand
+          ctx.fill();
+
+          // Point bar concentric accretion ridge lines (scroll bars)
+          ctx.strokeStyle = '#c6b077';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          const r1a = to3D(0.46, 0.26);
+          const r1b = to3D(0.68, 0.29);
+          const r1c = to3D(0.46, 0.33);
+          ctx.moveTo(r1a.x, r1a.y);
+          ctx.quadraticCurveTo(r1b.x, r1b.y, r1c.x, r1c.y);
+          ctx.stroke();
+          ctx.restore();
+
+          // Render channel
+          const banks = renderChannelPolygon(s2Spline, riverW, '#74acec');
+
+          // Cutbank highlights:
+          // 1. Along the outer apex of meander loop
+          // 2. Along opposing banks at the neck
+          ctx.save();
+          ctx.strokeStyle = '#e11d48'; // Bright red cutbank
+          ctx.lineWidth = 3.2;
+
+          if (banks && banks.leftBank) {
+            // Apex cutbank
+            ctx.beginPath();
+            const startIdx = Math.floor(banks.leftBank.length * 0.36);
+            const endIdx = Math.floor(banks.leftBank.length * 0.58);
+            ctx.moveTo(banks.leftBank[startIdx].x, banks.leftBank[startIdx].y);
+            for (let i = startIdx + 1; i <= endIdx; i++) {
+              ctx.lineTo(banks.leftBank[i].x, banks.leftBank[i].y);
+            }
+            ctx.stroke();
+          }
+
+          // Neck opposing cutbanks (red lines on opposing sides of neck)
+          ctx.beginPath();
+          const neckTop1 = to3D(0.24, 0.20);
+          const neckTop2 = to3D(0.32, 0.21);
+          ctx.moveTo(neckTop1.x, neckTop1.y);
+          ctx.lineTo(neckTop2.x, neckTop2.y);
+          ctx.stroke();
+
+          ctx.beginPath();
+          const neckBot1 = to3D(0.24, 0.31);
+          const neckBot2 = to3D(0.32, 0.30);
+          ctx.moveTo(neckBot1.x, neckBot1.y);
+          ctx.lineTo(neckBot2.x, neckBot2.y);
+          ctx.stroke();
+          ctx.restore();
+
+          // Flow arrows along the meander
+          const arrow1_p1 = to3D(0.44, 0.17);
+          const arrow1_p2 = to3D(0.60, 0.19);
+          drawStreamFlowArrow(ctx, arrow1_p1, arrow1_p2);
+
+          const arrow2_p1 = to3D(0.86, 0.31);
+          const arrow2_p2 = to3D(0.74, 0.37);
+          drawStreamFlowArrow(ctx, arrow2_p1, arrow2_p2);
+
+          const arrow3_p1 = to3D(0.18, 0.65);
+          const arrow3_p2 = to3D(0.20, 0.82);
+          drawStreamFlowArrow(ctx, arrow3_p1, arrow3_p2);
+
+          // EXACT LABELS & POINTERS MATCHING THE IMAGE:
+          // 1. "neck"
+          const neckTarget = to3D(0.28, 0.255);
+          const neckLabelPt = { x: Math.max(12, neckTarget.x - w * 0.16), y: neckTarget.y - h * 0.08 };
+          drawTextbookLeaderLine(ctx, neckLabelPt.x + 38, neckLabelPt.y + 4, neckTarget.x, neckTarget.y);
+
+          ctx.save();
+          ctx.font = 'bold 13px Plus Jakarta Sans, -apple-system, sans-serif';
+          ctx.fillStyle = '#181e29';
+          const neckText = timelineLang === 'bilingual' ? 'neck (曲流颈)' : 'neck';
+          ctx.fillText(neckText, neckLabelPt.x, neckLabelPt.y);
+
+          // 2. "point bar"
+          const pbTarget = to3D(0.58, 0.29);
+          const pbLabelPt = { x: pbTarget.x - w * 0.04, y: Math.max(18, pbTarget.y - h * 0.14) };
+          drawTextbookLeaderLine(ctx, pbLabelPt.x + 24, pbLabelPt.y + 12, pbTarget.x, pbTarget.y);
+
+          const pbText = timelineLang === 'bilingual' ? 'point bar (凸岸点坝)' : 'point bar';
+          ctx.fillText(pbText, pbLabelPt.x - 10, pbLabelPt.y);
+
+          // 3. "cutbank"
+          const cbTarget = to3D(0.88, 0.28);
+          const cbLabelPt = { x: Math.min(w - 90, cbTarget.x + w * 0.05), y: cbTarget.y - h * 0.06 };
+          drawTextbookLeaderLine(ctx, cbLabelPt.x - 6, cbLabelPt.y + 4, cbTarget.x, cbTarget.y);
+
+          const cbText = timelineLang === 'bilingual' ? 'cutbank (凹岸侵蚀崖)' : 'cutbank';
+          ctx.fillText(cbText, cbLabelPt.x, cbLabelPt.y);
+          ctx.restore();
+
+        } else if (s <= 3.4) {
+          // -------------------------------------------------------------------
+          // STAGE 3: Chute Cut-Off During Flood
+          // -------------------------------------------------------------------
+          // A. Abandoned / Bypassed loop (still filled with water)
+          const loopNodes = [
+            { u: 0.28, v: 0.18 },
+            { u: 0.48, v: 0.17 },
+            { u: 0.74, v: 0.21 },
+            { u: 0.88, v: 0.28 },
+            { u: 0.76, v: 0.37 },
+            { u: 0.50, v: 0.39 },
+            { u: 0.28, v: 0.34 }
+          ];
+          const loopSpline = generateSpline(loopNodes, 25);
+
+          // Point bar in loop
+          ctx.save();
+          ctx.beginPath();
+          const pbA = to3D(0.40, 0.24);
+          const pbB = to3D(0.66, 0.26);
+          const pbC = to3D(0.78, 0.30);
+          const pbD = to3D(0.62, 0.35);
+          const pbE = to3D(0.40, 0.33);
+          ctx.moveTo(pbA.x, pbA.y);
+          ctx.lineTo(pbB.x, pbB.y);
+          ctx.quadraticCurveTo(pbC.x, pbC.y, pbD.x, pbD.y);
+          ctx.lineTo(pbE.x, pbE.y);
+          ctx.closePath();
+          ctx.fillStyle = '#d8c38c';
+          ctx.fill();
+          ctx.restore();
+
+          // Render loop channel
+          renderChannelPolygon(loopSpline, riverW * 0.9, '#6ea7e8');
+
+          // B. New Chute Cut-Off Channel (Straight main river flowing straight down)
+          const mainNodes = [
+            { u: 0.24, v: 0.00 },
+            { u: 0.25, v: 0.15 },
+            { u: 0.26, v: 0.26 }, // Straight across neck
+            { u: 0.24, v: 0.38 },
+            { u: 0.18, v: 0.65 },
+            { u: 0.22, v: 1.00 }
+          ];
+          const mainSpline = generateSpline(mainNodes, 25);
+          renderChannelPolygon(mainSpline, riverW, '#74acec');
+
+          // Flow arrows through cut-off chute (high energy straight flow)
+          const arrow1_p1 = to3D(0.24, 0.08);
+          const arrow1_p2 = to3D(0.25, 0.18);
+          drawStreamFlowArrow(ctx, arrow1_p1, arrow1_p2);
+
+          const arrow2_p1 = to3D(0.26, 0.22);
+          const arrow2_p2 = to3D(0.25, 0.34);
+          drawStreamFlowArrow(ctx, arrow2_p1, arrow2_p2);
+
+          const arrow3_p1 = to3D(0.18, 0.65);
+          const arrow3_p2 = to3D(0.20, 0.82);
+          drawStreamFlowArrow(ctx, arrow3_p1, arrow3_p2);
+
+          // Annotation badge: Chute Cut-off
+          ctx.save();
+          const chuteTarget = to3D(0.26, 0.26);
+          const chuteLabelPt = { x: Math.max(12, chuteTarget.x - w * 0.18), y: chuteTarget.y - h * 0.05 };
+          drawTextbookLeaderLine(ctx, chuteLabelPt.x + 48, chuteLabelPt.y + 4, chuteTarget.x, chuteTarget.y);
+
+          ctx.font = 'bold 13px Plus Jakarta Sans, -apple-system, sans-serif';
+          ctx.fillStyle = '#181e29';
+          const chuteText = timelineLang === 'bilingual' ? 'Chute Cut-off (洪水截道)' : 'Chute cut-off';
+          ctx.fillText(chuteText, chuteLabelPt.x, chuteLabelPt.y);
+          ctx.restore();
+
+        } else {
+          // -------------------------------------------------------------------
+          // STAGE 4: Alluvial Plugs & Oxbow Lake (Replicating exact 4th block)
+          // -------------------------------------------------------------------
+          // A. Straight active river channel
+          const mainNodes = [
+            { u: 0.24, v: 0.00 },
+            { u: 0.25, v: 0.15 },
+            { u: 0.26, v: 0.26 },
+            { u: 0.24, v: 0.38 },
+            { u: 0.18, v: 0.65 },
+            { u: 0.22, v: 1.00 }
+          ];
+          const mainSpline = generateSpline(mainNodes, 25);
+          renderChannelPolygon(mainSpline, riverW, '#74acec');
+
+          // Flow arrows in active main channel
+          const arrow1_p1 = to3D(0.24, 0.08);
+          const arrow1_p2 = to3D(0.25, 0.18);
+          drawStreamFlowArrow(ctx, arrow1_p1, arrow1_p2);
+
+          const arrow2_p1 = to3D(0.26, 0.22);
+          const arrow2_p2 = to3D(0.25, 0.34);
+          drawStreamFlowArrow(ctx, arrow2_p1, arrow2_p2);
+
+          const arrow3_p1 = to3D(0.18, 0.65);
+          const arrow3_p2 = to3D(0.20, 0.82);
+          drawStreamFlowArrow(ctx, arrow3_p1, arrow3_p2);
+
+          // B. Detached Crescent Oxbow Lake (with Dark Charcoal/Black outer margin)
+          const lakeNodes = [
+            { u: 0.33, v: 0.20 },
+            { u: 0.50, v: 0.18 },
+            { u: 0.74, v: 0.21 },
+            { u: 0.88, v: 0.28 },
+            { u: 0.76, v: 0.37 },
+            { u: 0.50, v: 0.39 },
+            { u: 0.33, v: 0.34 }
+          ];
+          const lakeSpline = generateSpline(lakeNodes, 25);
+
+          // Point bar within oxbow lake
+          ctx.save();
+          ctx.beginPath();
+          const pbA = to3D(0.42, 0.25);
+          const pbB = to3D(0.66, 0.26);
+          const pbC = to3D(0.78, 0.30);
+          const pbD = to3D(0.62, 0.35);
+          const pbE = to3D(0.42, 0.33);
+          ctx.moveTo(pbA.x, pbA.y);
+          ctx.lineTo(pbB.x, pbB.y);
+          ctx.quadraticCurveTo(pbC.x, pbC.y, pbD.x, pbD.y);
+          ctx.lineTo(pbE.x, pbE.y);
+          ctx.closePath();
+          ctx.fillStyle = '#d2bf8b';
+          ctx.fill();
+          ctx.restore();
+
+          // Render oxbow lake water (stagnant placid blue)
+          const lakeBanks = renderChannelPolygon(lakeSpline, riverW * 0.82, '#629ddf', false);
+
+          // Dark Charcoal/Black margin on the outer bank of oxbow lake (decaying banks/marsh line)
+          if (lakeBanks && lakeBanks.leftBank) {
+            ctx.save();
+            ctx.strokeStyle = '#181f2a'; // Bold dark border matching image
+            ctx.lineWidth = 3.4;
+            ctx.beginPath();
+            ctx.moveTo(lakeBanks.leftBank[0].x, lakeBanks.leftBank[0].y);
+            for (let i = 1; i < lakeBanks.leftBank.length; i++) {
+              ctx.lineTo(lakeBanks.leftBank[i].x, lakeBanks.leftBank[i].y);
+            }
+            ctx.stroke();
+
+            // Lake inner edge stroke
+            ctx.strokeStyle = '#2d435d';
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.moveTo(lakeBanks.rightBank[0].x, lakeBanks.rightBank[0].y);
+            for (let i = 1; i < lakeBanks.rightBank.length; i++) {
+              ctx.lineTo(lakeBanks.rightBank[i].x, lakeBanks.rightBank[i].y);
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // C. Alluvial Plugs with Silt & Clay (Blocking the two entrances)
+          // Plug 1 (Upstream entrance)
+          const plug1 = to3D(0.29, 0.19);
+          const plug2 = to3D(0.29, 0.345);
+
+          function drawPlugSediment(center) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(center.x, center.y, 11, 7, -0.3, 0, Math.PI * 2);
+            ctx.fillStyle = '#caa56d'; // Silt and clay sediment tan
+            ctx.fill();
+            ctx.strokeStyle = '#322214';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Sand/silt stipples
+            ctx.fillStyle = '#8b693e';
+            ctx.fillRect(center.x - 3, center.y - 2, 1.5, 1.5);
+            ctx.fillRect(center.x + 2, center.y + 1, 1.5, 1.5);
+            ctx.fillRect(center.x - 1, center.y + 3, 1.5, 1.5);
+            ctx.restore();
+          }
+
+          drawPlugSediment(plug1);
+          drawPlugSediment(plug2);
+
+          // EXACT LABELS & POINTERS MATCHING THE IMAGE:
+          // 1. "Plugs with silt and clay"
+          ctx.save();
+          ctx.font = 'bold 13px Plus Jakarta Sans, -apple-system, sans-serif';
+          ctx.fillStyle = '#181e29';
+
+          const plugsLabelPt = { x: Math.max(12, plug1.x - w * 0.22), y: (plug1.y + plug2.y) * 0.5 - 2 };
+          drawTextbookLeaderLine(ctx, plugsLabelPt.x + 52, plugsLabelPt.y + 4, plug1.x - 6, plug1.y, true, { x: plug2.x - 6, y: plug2.y });
+
+          const plugsText = timelineLang === 'bilingual' ? 'Plugs with silt and clay (泥沙淤塞)' : 'Plugs with silt and clay';
+          ctx.fillText(plugsText, plugsLabelPt.x, plugsLabelPt.y);
+
+          // 2. "oxbow lake"
+          const lakeTarget = to3D(0.68, 0.24);
+          const lakeLabelPt = { x: lakeTarget.x - w * 0.04, y: Math.max(18, lakeTarget.y - h * 0.15) };
+          drawTextbookLeaderLine(ctx, lakeLabelPt.x + 28, lakeLabelPt.y + 12, lakeTarget.x, lakeTarget.y);
+
+          const lakeText = timelineLang === 'bilingual' ? 'oxbow lake (牛轭湖)' : 'oxbow lake';
+          ctx.fillText(lakeText, lakeLabelPt.x - 12, lakeLabelPt.y);
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      // Render all 4 static block canvases
+      function renderAll4Blocks() {
+        if (blockCanvas1) draw3DGeologicalBlock(blockCanvas1, 1);
+        if (blockCanvas2) draw3DGeologicalBlock(blockCanvas2, 2);
+        if (blockCanvas3) draw3DGeologicalBlock(blockCanvas3, 3);
+        if (blockCanvas4) draw3DGeologicalBlock(blockCanvas4, 4);
+      }
+
+      // Draw interactive 3D morphing block
+      function drawInteractive3DBlock() {
+        if (!timeCanvas) return;
+        draw3DGeologicalBlock(timeCanvas, currentStageVal, { isInteractive: true, flowAnimTime });
+      }
+
+      // Resize interactive timeline canvas
+      let timeWidth = 700;
+      let timeHeight = 440;
+      function resizeTimelineCanvas() {
+        if (!timeWrap || !timeCanvas) return;
+        const rect = timeWrap.getBoundingClientRect();
+        if (rect.width > 50 && rect.height > 50) {
+          timeWidth = Math.floor(rect.width);
+          timeHeight = Math.floor(rect.height);
+          timeCanvas.width = timeWidth;
+          timeCanvas.height = timeHeight;
+        }
+        drawInteractive3DBlock();
+      }
+      window.addEventListener('resize', () => {
+        resizeTimelineCanvas();
+        renderAll4Blocks();
+      });
+
+      // Data definitions for 4 Stages
+      const STAGE_THEORY = {
+        1: {
+          name: 'Stage 1: 初始微弯与 Pool-Riffle 形成 (Incipient Sinuosity)',
+          title: '阶段 1: 初始微弯直道与 Pool-Riffle 序列',
+          desc: '由于河床深潭-浅滩序列的水动力扰动，初始直道流速线（Thalweg）产生横向摆动，凹岸初现侧蚀崖（Cutbank），凸岸形成点坝（Point bar）。',
+          points: [
+            '<strong>深潭-浅滩序列</strong>：笔直冲积河道自发形成深潭（Pools）与浅滩（Riffles），深泓线发生左右偏转摆动；',
+            '<strong>初始侵蚀分化</strong>：凹岸（Concave bank）承受较大动能掏蚀，凸岸（Convex bank）流速缓慢堆积砂砾点坝；',
+            '<strong>曲度阈值</strong>：曲度指数（Sinuosity = 实际河道长 / 直线距离）超过 1.5 即可划为典型曲流系统。'
+          ],
+          keywords: ['Pool-riffle sequence', 'Incipient meander', 'Thalweg deflection', 'Sinuosity (>1.5)', 'Cutbank & Point bar']
+        },
+        2: {
+          name: 'Stage 2: 侧向侵蚀与曲流颈极度变窄 (Narrow Neck & Lateral Erosion)',
+          title: '阶段 2: 侧向侵蚀加速与曲流颈极度变窄',
+          desc: '三维螺旋流（Helicoidal flow）完全发育，弯道向外急剧扩展，相邻弯道凹岸反向剧烈侧蚀，分隔陆地被压缩为极薄的曲流颈（Neck）。',
+          points: [
+            '<strong>曲流颈（Neck）</strong>：两相邻弯道的外侧凹岸在相反方向上剧烈侧蚀，使颈部陆桥厚度锐减至突破临界；',
+            '<strong>凸岸点坝（Point bar）</strong>：螺旋流底层水流携带凹岸碎屑横越河床，在凸岸层层叠覆增生（Accretion）；',
+            '<strong>凹岸侵蚀崖（Cutbank）</strong>：水动力冲击坡脚导致凹岸形成陡峭悬崖，侧向侵蚀达到全周期最高速率。'
+          ],
+          keywords: ['Narrow neck', 'Opposing lateral erosion', 'Helicoidal flow', 'River cliff (Cutbank)', 'Point bar accretion']
+        },
+        3: {
+          name: 'Stage 3: 特大洪水裁弯取直 (Chute Cut-Off During Flood)',
+          title: '阶段 3: 特大洪水期冲开曲流颈裁弯取直',
+          desc: '在特大洪水期，暴涨河水漫过滩地，沿阻力最小、水力坡降最陡的曲流颈直线贯通，冲出全新直水道（Chute Cut-Off）。',
+          points: [
+            '<strong>裁弯驱动（Cut-off）</strong>：洪水期河流水深流急，沿狭窄曲流颈的最短直线路径直冲开全新主水道；',
+            '<strong>水力坡降骤增</strong>：裁弯取直后流程大幅缩短，局部坡降增大，主流绝大部分水体直接由新水道奔流而下；',
+            '<strong>旧弯废弃（Bypassed loop）</strong>：原迂回曲流环路丧失干流水流，流速大幅降低，转入低能量静水滞流状态。'
+          ],
+          keywords: ['Chute cut-off', 'High discharge flood stage', 'Hydraulic gradient steepening', 'Bypassed meander loop']
+        },
+        4: {
+          name: 'Stage 4: 泥沙淤塞封堵与牛轭湖脱离 (Oxbow Lake & Alluvial Plugs)',
+          title: '阶段 4: 泥沙与粘土淤塞封堵，独立牛轭湖形成',
+          desc: '废弃弯道两端因流速骤降，粉砂与粘土大量沉积形成冲积塞（Plugs with silt and clay），旧弯与干流脱离成为弓形滞水牛轭湖（Oxbow Lake）。',
+          points: [
+            '<strong>冲积塞（Alluvial Plugs）</strong>：废弃旧河道进出口流速急降，干流带来的悬移质（细砂、粉砂与粘土）大量淤积成塞；',
+            '<strong>牛轭湖（Oxbow Lake）</strong>：彻底与干流水流隔绝，形成孤立的新月形/弓形静止水体；边缘积累黑色腐殖泥炭；',
+            '<strong>地貌演化终局</strong>：牛轭湖随季节蒸发、淤积填塞及水生植被演替，最终退化为弯曲沼泽凹槽（Meander Scar / Marsh）。'
+          ],
+          keywords: ['Plugs with silt and clay', 'Oxbow lake', 'Mortlake', 'Stagnant water', 'Meander scar / Swamp succession']
+        }
+      };
+
+      function updateTimelineStage(val) {
+        currentStageVal = Math.max(1, Math.min(4, val));
+        if (timeSlider) timeSlider.value = currentStageVal.toString();
+        const percent = Math.round(((currentStageVal - 1) / 3) * 100);
+        if (timePercentLabel) timePercentLabel.textContent = `${percent}% (Stage ${currentStageVal.toFixed(1)})`;
+
+        const intStage = Math.min(4, Math.floor(currentStageVal));
+        if (timeStageIndicator) timeStageIndicator.textContent = `Stage ${intStage} of 4`;
+
+        // Update Stepper buttons styling
+        document.querySelectorAll('.stage-step-btn').forEach(b => {
+          const s = parseInt(b.getAttribute('data-stage'), 10);
+          if (s === intStage) {
+            b.className = 'stage-step-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 bg-emerald-950/40 border-emerald-500 text-white';
+            const dot = b.querySelector('.rounded-full');
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+          } else {
+            b.className = 'stage-step-btn p-3 rounded-xl border text-left transition flex flex-col gap-1 bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800';
+            const dot = b.querySelector('.rounded-full');
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-transparent';
+          }
+        });
+
+        // Update Text Panel
+        const data = STAGE_THEORY[intStage];
+        const panelStageName = document.getElementById('panel-stage-name');
+        const overlayStageTitle = document.getElementById('overlay-stage-title');
+        const overlayStageDesc = document.getElementById('overlay-stage-desc');
+        if (panelStageName) panelStageName.textContent = data.name;
+        if (overlayStageTitle) overlayStageTitle.textContent = data.title;
+        if (overlayStageDesc) overlayStageDesc.textContent = data.desc;
+
+        const detailsEl = document.getElementById('panel-stage-details');
+        if (detailsEl) {
+          detailsEl.innerHTML = data.points.map(pt => `<div class="flex items-start gap-1.5"><span class="text-emerald-400 font-bold">•</span><span>${pt}</span></div>`).join('');
+        }
+
+        const kwEl = document.getElementById('panel-stage-keywords');
+        if (kwEl) {
+          kwEl.innerHTML = data.keywords.map(kw => `<span class="px-2 py-0.5 rounded text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-800 font-medium">${kw}</span>`).join('');
+        }
+
+        drawInteractive3DBlock();
+      }
+
+      if (timeSlider) {
+        timeSlider.addEventListener('input', (e) => {
+          updateTimelineStage(parseFloat(e.target.value));
+        });
+      }
+
+      document.querySelectorAll('.stage-step-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const s = parseFloat(btn.getAttribute('data-stage'));
+          updateTimelineStage(s);
+        });
+      });
+
+      // Timeline Auto-play logic
+      if (btnTimePlay) {
+        btnTimePlay.addEventListener('click', () => {
+          isTimelinePlaying = !isTimelinePlaying;
+          if (isTimelinePlaying) {
+            textTimePlay.textContent = '暂停演变播放';
+            iconTimePlay.setAttribute('data-lucide', 'pause');
+          } else {
+            textTimePlay.textContent = '自动连续播放';
+            iconTimePlay.setAttribute('data-lucide', 'play');
+          }
+          if (window.lucide) window.lucide.createIcons();
+        });
+      }
+
+      // Continuous loop for interactive morphing and animation
+      function timelineRenderLoop() {
+        flowAnimTime += 0.03;
+        if (isTimelinePlaying) {
+          currentStageVal += 0.005;
+          if (currentStageVal > 4.0) {
+            currentStageVal = 1.0;
+          }
+          updateTimelineStage(currentStageVal);
+        } else if (!viewTimelineInteractive.classList.contains('hidden')) {
+          drawInteractive3DBlock();
+        }
+
+        requestAnimationFrame(timelineRenderLoop);
+      }
+
+      // Initial block render
+      renderAll4Blocks();
+      updateTimelineStage(1.0);
+      timelineRenderLoop();
+
+      // =======================================================================
+      // MODULE 4: REVISION TOOL (KEYWORDS CHECKLIST & 5 QUIZ QUESTIONS)
+      // =======================================================================
+      const KEYWORDS_DATA = [
+        {
+          term: '深泓线 (Thalweg)',
+          en: 'Thalweg',
+          def: '河流横断面中最大水深点与最大流速点的连续轨迹线。在曲流中受离心力驱动严重偏向凹岸外侧。',
+          examTip: 'CIE 踩分点：必须明确指明 Thalweg = Line of fastest flow / greatest depth，且在弯道偏向 outer concave bank。'
+        },
+        {
+          term: '三维螺旋流 (Helicoidal Flow)',
+          en: 'Helicoidal Flow / Corkscrew',
+          def: '曲流弯道中形成的三维螺旋状水流运动。表层水冲向凹岸下沉，底层水流回旋折向凸岸。',
+          examTip: 'CIE 踩分点：常考绘图题！务必画出螺旋箭头，强调是“维持”曲流而非“初始产生”曲流的关键。'
+        },
+        {
+          term: '水力作用 (Hydraulic Action)',
+          en: 'Hydraulic Action',
+          def: '高速水流冲击岩体裂隙，强行压缩其中的封闭空气，随流体退后产生瞬时空化爆破压力的物理侵蚀过程。',
+          examTip: '必须使用 cavitation, air compression in cracks 等专业表达。'
+        },
+        {
+          term: '磨蚀作用 (Corrasion / Abrasion)',
+          en: 'Corrasion / Abrasion',
+          def: '河流中携带的推移质颗粒（砂、砾）在河床与崖脚刮擦、研磨所造成的机械磨损。',
+          examTip: '凹岸掏空槽（Undercutting notch）的主要成因机制之一。'
+        },
+        {
+          term: '曲度指数 (Sinuosity Index)',
+          en: 'Sinuosity Index',
+          def: '河流实际渠道长度与河谷直线长度的比值（Actual Channel Length / Valley Length）。> 1.5 判定为真正曲流。',
+          examTip: '计算题必背公式：Sinuosity = Channel Length ÷ Valley Length。'
+        },
+        {
+          term: '边滩 / 点坝 (Point Bar / Slip-Off Slope)',
+          en: 'Point Bar / Slip-Off Slope',
+          def: '凸岸内侧由于水深浅、床面阻力大导致水流动能急剧下降而形成的倾斜沉积地貌，具明显粒径正粒序。',
+          examTip: '答题需强调：“Low energy”, “Friction”, “Coarse to fine sorting upward”。'
+        },
+        {
+          term: '深潭-浅滩序列 (Pool-Riffle Sequence)',
+          en: 'Pool-Riffle Sequence',
+          def: '直道中周期性交替分布的深洼高阻区（Pool）与浅水粗砾区（Riffle），间距约为 5–7 倍河宽。',
+          examTip: '曲流发育的“起因（Initiation）”考点核心词。'
+        },
+        {
+          term: '裁弯取直 (Cut-Off)',
+          en: 'Chute Cut-Off / Neck Cut-Off',
+          def: '曲流颈因侵蚀极度变窄后，在洪水峰期高水头比降下被水流贯通裁弯，导致旧曲流脱离干流成为牛轭湖。',
+          examTip: '强调 Cut-off 发生在“High discharge / Flood conditions”时期。'
+        }
+      ];
+
+      function renderKeywords() {
+        const container = document.getElementById('keywords-list-container');
+        if (!container) return;
+
+        container.innerHTML = KEYWORDS_DATA.map((k, idx) => `
+          <div class="p-3 rounded-xl bg-slate-800/70 border border-slate-700/60 space-y-1.5 hover:border-slate-600 transition">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-purple-300 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                ${k.term}
+              </span>
+              <span class="text-[10px] font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">${k.en}</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">${k.def}</p>
+            <div class="text-[10px] text-amber-300/90 bg-amber-950/40 px-2 py-1 rounded border border-amber-900/40">
+              📌 <strong>Mark Scheme Tip</strong>: ${k.examTip}
+            </div>
+          </div>
+        `).join('');
+      }
+      renderKeywords();
+
+      // 5 Realistic CIE 9696 Exam Questions
+      const QUIZ_QUESTIONS = [
+        {
+          id: 1,
+          question: '1. [CIE 9696 单选] 在典型的曲流横截面中，深泓线（Thalweg）的核心位置与特征是：',
+          options: [
+            { label: 'A', text: '严格居中，水流呈现对称抛物线状分布' },
+            { label: 'B', text: '偏向凸岸（Convex bank），该处水浅且流速最高' },
+            { label: 'C', text: '偏向凹岸（Concave bank），该处水深最大且受离心力作用流速最高', correct: true },
+            { label: 'D', text: '随机浮动，不受弯道曲率与离心力影响' }
+          ],
+          explanation: '【评分标准解析】：离心力驱动水流堆向外岸（凹岸），使得深泓线（Thalweg = line of maximum depth and velocity）紧贴凹岸外侧，造成该处湿周摩擦相对较小、流速极大，从而成为侧蚀主导区。'
+        },
+        {
+          id: 2,
+          question: '2. [CIE 9696 单选] 关于三维螺旋流（Helicoidal Flow）的水体运动轨迹，下列描述哪项严格符合物理机制？',
+          options: [
+            { label: 'A', text: '表层水流向凹岸，底层水流回旋流向凸岸并搬运推移质', correct: true },
+            { label: 'B', text: '表层水流向凸岸，底层水流流向凹岸' },
+            { label: 'C', text: '整个水体做垂直上下剧烈翻滚，无横向分量' },
+            { label: 'D', text: '仅在平水期存在，洪水期完全停止' }
+          ],
+          explanation: '【评分标准解析】：考官报告高频失分点！正确流态是：表层由于水面横向比降冲向凹岸并产生下沉流（downwelling）；河床底部受压力差驱动逆向回流至凸岸，并将底部侵蚀颗粒输送到点坝（Point bar）沉积。'
+        },
+        {
+          id: 3,
+          question: '3. [CIE 9696 判断] 曲流的初始形成（Initiation）主要是由深潭-浅滩序列（Pool-Riffle Sequence）引起的水动力非对称扰动触发的，对吗？',
+          options: [
+            { label: 'A', text: '正确（True）：直道中约 5–7 倍河宽间隔自发形成深潭浅滩，诱发水流偏转', correct: true },
+            { label: 'B', text: '错误（False）：曲流必须依赖地壳板块断裂或巨石阻挡才能出现' }
+          ],
+          explanation: '【评分标准解析】：完全正确。即使没有任何外在障碍，均匀冲积砂卵石河道在一定比降下也会自组织形成 Pool-Riffle 序列（波长约为 5–7 倍河宽），导致水流线产生横向正弦偏摆。'
+        },
+        {
+          id: 4,
+          question: '4. [CIE 9696 单选] 形成牛轭湖（Oxbow Lake）的关键裁弯取直（Cut-off）事件，通常集中发生于哪种水文状态？',
+          options: [
+            { label: 'A', text: '冬季枯水期，因水流干涸导致河道收缩' },
+            { label: 'B', text: '特大洪水期（Flood conditions），因水深大、动能高且曲流颈两侧水头差极大', correct: true },
+            { label: 'C', text: '水坝蓄水期，因流速降低泥沙完全淤积' },
+            { label: 'D', text: '任何普通平水日无差别发生' }
+          ],
+          explanation: '【评分标准解析】：CIE 标答标准词：Flooding / High discharge。洪水时漫滩水流沿阻力更小、比降最陡的曲流颈（Narrow neck）直接贯穿，迅速冲刷形成新槽（Cut-off chute）。'
+        },
+        {
+          id: 5,
+          question: '5. [CIE 9696 多选综合] 点坝（Point Bar / Slip-off Slope）呈现向上粒径变细的层理结构（Graded bedding），其主要原因是：',
+          options: [
+            { label: 'A', text: '凸岸水深浅、粗糙床底摩擦大，能量随水深变浅递减，粗颗粒先沉积', correct: true },
+            { label: 'B', text: '凹岸水流将所有颗粒全部粉碎成泥浆才抛掷过来' },
+            { label: 'C', text: '凸岸由于螺旋流持续冲刷只剩下裸露岩基' },
+            { label: 'D', text: '凸岸流速最高，导致细颗粒被吸走' }
+          ],
+          explanation: '【评分标准解析】：根据尤尔斯特伦图解（Hjulström curve），流速能量衰减时沉降速度大的粗粒（砾石/粗砂）率先脱离悬移/跃移在基底部沉积；更浅更慢的浅滩顶部只能沉积粉砂与细黏土。'
+        }
+      ];
+
+      let userQuizAnswers = {};
+
+      function renderQuiz() {
+        const container = document.getElementById('quiz-cards-container');
+        if (!container) return;
+
+        container.innerHTML = QUIZ_QUESTIONS.map(q => {
+          const userSelected = userQuizAnswers[q.id];
+          const hasAnswered = userSelected !== undefined;
+
+          return `
+            <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700 space-y-3" id="quiz-card-${q.id}">
+              <div class="text-xs sm:text-sm font-bold text-white flex items-start justify-between gap-2">
+                <span>${q.question}</span>
+                ${hasAnswered ? (userSelected.correct 
+                  ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1"><i data-lucide="check" class="w-3.5 h-3.5"></i> 正确</span>' 
+                  : '<span class="px-2 py-0.5 rounded text-xs font-bold bg-red-950 text-red-400 border border-red-800 flex items-center gap-1"><i data-lucide="x" class="w-3.5 h-3.5"></i> 需订正</span>') 
+                  : ''}
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                ${q.options.map((opt, optIdx) => {
+                  let btnStyle = 'bg-slate-900/80 border-slate-700 hover:bg-slate-800 text-slate-200';
+                  if (hasAnswered) {
+                    if (opt.correct) {
+                      btnStyle = 'bg-emerald-950/70 border-emerald-500 text-emerald-200 font-semibold';
+                    } else if (userSelected.optIdx === optIdx && !opt.correct) {
+                      btnStyle = 'bg-red-950/70 border-red-500 text-red-200 line-through';
+                    }
+                  }
+
+                  return `
+                    <button class="text-left p-2.5 rounded-lg border text-xs transition flex items-start gap-2 ${btnStyle}" 
+                            onclick="window.submitQuizAnswer(${q.id}, ${optIdx})" 
+                            ${hasAnswered ? 'disabled' : ''}>
+                      <span class="font-bold font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">${opt.label}</span>
+                      <span class="leading-tight">${opt.text}</span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+
+              ${hasAnswered ? `
+                <div class="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                  ${q.explanation}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+        // update score
+        let score = 0;
+        Object.values(userQuizAnswers).forEach(ans => {
+          if (ans.correct) score++;
+        });
+        const scoreEl = document.getElementById('quiz-total-score');
+        if (scoreEl) scoreEl.textContent = `${score} / ${QUIZ_QUESTIONS.length}`;
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      window.submitQuizAnswer = function(questionId, optionIndex) {
+        const q = QUIZ_QUESTIONS.find(item => item.id === questionId);
+        if (!q) return;
+        const opt = q.options[optionIndex];
+        userQuizAnswers[questionId] = {
+          optIdx: optionIndex,
+          correct: !!opt.correct
+        };
+        renderQuiz();
+      };
+
+      const btnResetQuiz = document.getElementById('btn-reset-quiz');
+      if (btnResetQuiz) {
+        btnResetQuiz.addEventListener('click', () => {
+          userQuizAnswers = {};
+          renderQuiz();
+        });
+      }
+      renderQuiz();
+
+    });
+  </script>
+</body>
+</html>

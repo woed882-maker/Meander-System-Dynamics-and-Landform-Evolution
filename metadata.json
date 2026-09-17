@@ -1,0 +1,6 @@
+{
+  "name": "Meander Fluvial Geomorphology Simulator",
+  "description": "Interactive CIE A-Level Geography 9696 educational simulator for river cliffs, point bars, helicoidal flow, and meander evolution to oxbow lakes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
